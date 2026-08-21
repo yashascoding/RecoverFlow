@@ -26,4 +26,8 @@ Priya clicks, pays, and completes her purchase.
 **Payment Failed → AI Investigates → Policy Check → WhatsApp → Customer Pays → Revenue Recovered → Audit Trail**
 
 
+<img width="1858" height="915" alt="image" src="https://github.com/user-attachments/assets/3dc67985-98fb-4ea2-8339-83226267a188" />
+
+
+
 
