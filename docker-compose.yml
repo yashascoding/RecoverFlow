@@ -4,23 +4,31 @@ services:
     environment:
       POSTGRES_USER: recoverflow
       POSTGRES_PASSWORD: recoverflow123
-      POSTGRES_DB: recoverflow_db
+      POSTGRES_DB: recoverflow
+    ports:
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - recoverflow
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U recoverflow -d recoverflow_db"]
+      test: ["CMD-SHELL", "pg_isready -U recoverflow -d recoverflow"]
       interval: 5s
       timeout: 5s
       retries: 5
-     
+
   redis:
     image: redis:7-alpine
+    ports:
+      - "6380:6379"
+    networks:
+      - recoverflow
     healthcheck:
-      test: ["CMD", "redis-cli","ping"]
+      test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 5s
       retries: 5
-  
+
   backend:
     build: ./backend
     ports:
@@ -29,8 +37,16 @@ services:
       - POSTGRES_HOST=postgres
       - POSTGRES_USER=recoverflow
       - POSTGRES_PASSWORD=recoverflow123
-      - POSTGRES_DB=recoverflow_db
+      - POSTGRES_DB=recoverflow
       - REDIS_HOST=redis
+      - ENVIRONMENT=development
+      - DEBUG=true
+      - LOG_LEVEL=DEBUG
+      - RAZORPAY_KEY_ID=${RAZORPAY_KEY_ID}
+      - RAZORPAY_KEY_SECRET=${RAZORPAY_KEY_SECRET}
+      - RAZORPAY_WEBHOOK_SECRET=${RAZORPAY_WEBHOOK_SECRET}
+      - RESEND_API_KEY=${RESEND_API_KEY}
+      - TEST_EMAIL=${TEST_EMAIL}
     volumes:
       - ./backend:/app
     depends_on:
@@ -38,7 +54,54 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    networks:
+      - recoverflow
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')\" || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - recoverflow
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:80 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  worker:
+    build: ./worker
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - recoverflow
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import redis; r = redis.Redis(host=\"redis\", port=6379); r.ping()' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+networks:
+  recoverflow:
+    driver: bridge
 
 volumes:
   postgres_data:

@@ -1,37 +1,44 @@
+from __future__ import annotations
+
+from datetime import datetime, timezone
+import redis.asyncio as aioredis
 from fastapi import APIRouter
 from sqlalchemy import text
-import redis.asyncio as redis
-from datetime import datetime
 
-from app.core.config import settings
-from app.db.session import engine
+from app.core.config import get_settings
+from app.db.database import engine
+from app.schemas.payment import HealthResponse
 
-router = APIRouter()
+router = APIRouter(tags=["health"])
 
-REDIS_URL = settings.REDIS_URL or f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}"
+settings = get_settings()
 
-redis_client = redis.from_url(REDIS_URL, decode_responses=True)
+redis_client = aioredis.from_url(settings.REDIS_URL, decode_responses=True)
 
-@router.get("/health")
-async def health_check():
+
+@router.get("/health", response_model=HealthResponse)
+async def health_check() -> HealthResponse:
+    postgres_status = "disconnected"
+    redis_status = "disconnected"
 
     try:
-        with engine.connect() as conn:
-            conn.execute(text("SELECT 1"))
+        async with engine.connect() as conn:
+            await conn.execute(text("SELECT 1"))
         postgres_status = "connected"
-    except Exception as e:
-        postgres_status = "disconnected"
+    except Exception:
+        pass
 
     try:
         await redis_client.ping()
         redis_status = "connected"
-    except Exception as e:
-        redis_status = "disconnected"
+    except Exception:
+        pass
 
-    return {
-        "status": "ok" if postgres_status == "connected" and redis_status == "connected"
-            else "degraded",
-        "postgres": postgres_status,
-        "redis": redis_status,
-        "timestamp": datetime.utcnow().isoformat()
-    }
+    overall = "ok" if postgres_status == "connected" and redis_status == "connected" else "degraded"
+
+    return HealthResponse(
+        status=overall,
+        postgres=postgres_status,
+        redis=redis_status,
+        timestamp=datetime.now(timezone.utc).isoformat(),
+    )
