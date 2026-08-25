@@ -32,7 +32,7 @@ class PaymentService:
             currency=currency,
             customer_email=customer_email,
             customer_phone=customer_phone,
-            status=PaymentStatus.CREATED,
+            status=PaymentStatus.CREATED.value,
             metadata_=metadata,
         )
         self.db.add(payment)
@@ -51,7 +51,9 @@ class PaymentService:
         payment_id: str | None = None,
     ) -> Payment | None:
         if isinstance(status, str):
-            status = PaymentStatus(status)
+            status_value = status
+        else:
+            status_value = status.value
         result = await self.db.execute(
             select(Payment).where(Payment.razorpay_order_id == order_id)
         )
@@ -61,7 +63,7 @@ class PaymentService:
             return None
 
         old_status = payment.status
-        payment.status = status
+        payment.status = status_value
         if payment_id:
             payment.razorpay_payment_id = payment_id
         payment.updated_at = datetime.now(timezone.utc)
@@ -70,8 +72,8 @@ class PaymentService:
             "payment_status_updated",
             extra={
                 "order_id": order_id,
-                "old_status": old_status.value,
-                "new_status": status.value,
+                "old_status": old_status,
+                "new_status": status_value,
             },
         )
         return payment
@@ -110,7 +112,7 @@ class PaymentService:
 
     async def list_payments(
         self,
-        status: PaymentStatus | None = None,
+        status: PaymentStatus | str | None = None,
         customer_email: str | None = None,
         page: int = 1,
         page_size: int = 20,
@@ -119,8 +121,9 @@ class PaymentService:
         count_query = select(func.count()).select_from(Payment)
 
         if status:
-            query = query.where(Payment.status == status)
-            count_query = count_query.where(Payment.status == status)
+            status_value = status.value if isinstance(status, PaymentStatus) else status
+            query = query.where(Payment.status == status_value)
+            count_query = count_query.where(Payment.status == status_value)
         if customer_email:
             query = query.where(Payment.customer_email == customer_email)
             count_query = count_query.where(Payment.customer_email == customer_email)

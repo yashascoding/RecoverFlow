@@ -4,7 +4,7 @@ import enum
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import DateTime, Enum, Index, String, Text, func
+from sqlalchemy import DateTime, ForeignKey, Index, String, Text, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -26,6 +26,9 @@ class Payment(Base):
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
+    customer_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("customers.id", ondelete="SET NULL"), nullable=True, index=True
+    )
     razorpay_order_id: Mapped[str] = mapped_column(
         String(255), unique=True, nullable=False, index=True
     )
@@ -36,10 +39,10 @@ class Payment(Base):
     customer_phone: Mapped[str | None] = mapped_column(String(20), nullable=True)
     amount: Mapped[int] = mapped_column(nullable=False, comment="Amount in paise")
     currency: Mapped[str] = mapped_column(String(3), nullable=False, default="INR")
-    status: Mapped[PaymentStatus] = mapped_column(
-        Enum(PaymentStatus, name="payment_status"),
+    status: Mapped[str] = mapped_column(
+        String(50),
         nullable=False,
-        default=PaymentStatus.CREATED,
+        default=PaymentStatus.CREATED.value,
     )
     recovery_email_sent: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True

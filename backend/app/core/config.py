@@ -42,7 +42,8 @@ class Settings(BaseSettings):
 
     # Resend (email)
     RESEND_API_KEY: str = ""
-    RECOVERY_EMAIL_FROM: str = "recovery@recoverflow.dev"
+    RESEND_WEBHOOK_SECRET: str = ""
+    RECOVERY_EMAIL_FROM: str = ""
 
     # Recovery policy
     RECOVERY_LINK_TTL_MINUTES: int = 1440

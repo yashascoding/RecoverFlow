@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import hashlib
 import hmac
-import base64
 from typing import Any
 
 import razorpay
@@ -60,13 +59,12 @@ class RazorpayService:
         """Verify Razorpay webhook signature using HMAC-SHA256."""
         secret = secret or settings.RAZORPAY_WEBHOOK_SECRET
         try:
-            expected = hmac.HMAC(
+            expected = hmac.new(
                 secret.encode("utf-8"),
                 payload,
                 hashlib.sha256,
-            ).digest()
-            expected_b64 = base64.b64encode(expected).decode("utf-8")
-            return hmac.compare_digest(expected_b64, signature)
+            ).hexdigest()
+            return hmac.compare_digest(expected, signature)
         except Exception as e:
             logger.error("webhook_verification_error", extra={"error": str(e)})
             return False

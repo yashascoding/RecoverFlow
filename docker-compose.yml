@@ -46,6 +46,7 @@ services:
       - RAZORPAY_KEY_SECRET=${RAZORPAY_KEY_SECRET}
       - RAZORPAY_WEBHOOK_SECRET=${RAZORPAY_WEBHOOK_SECRET}
       - RESEND_API_KEY=${RESEND_API_KEY}
+      - RESEND_WEBHOOK_SECRET=${RESEND_WEBHOOK_SECRET}
       - TEST_EMAIL=${TEST_EMAIL}
     volumes:
       - ./backend:/app
@@ -81,23 +82,33 @@ services:
       start_period: 10s
 
   worker:
-    build: ./worker
+    build: ./backend
     environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_USER=recoverflow
+      - POSTGRES_PASSWORD=recoverflow123
+      - POSTGRES_DB=recoverflow
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - CELERY_BROKER_URL=redis://redis:6379/1
-      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      - ENVIRONMENT=development
+      - DEBUG=true
+      - LOG_LEVEL=DEBUG
+    volumes:
+      - ./backend:/app
     depends_on:
+      postgres:
+        condition: service_healthy
       redis:
         condition: service_healthy
     networks:
       - recoverflow
+    command: python -m app.workers.event_worker
     healthcheck:
-      test: ["CMD-SHELL", "python -c 'import redis; r = redis.Redis(host=\"redis\", port=6379); r.ping()' || exit 1"]
+      test: ["CMD-SHELL", "python -c 'import redis.asyncio as r; print(\"ok\")' || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 5s
+      start_period: 10s
 
 networks:
   recoverflow:

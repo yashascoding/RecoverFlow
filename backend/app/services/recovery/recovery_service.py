@@ -31,7 +31,7 @@ class RecoveryService:
             )
 
         payment.recovery_email_sent = datetime.now(timezone.utc)
-        payment.status = PaymentStatus.RECOVERED
+        payment.status = PaymentStatus.RECOVERED.value
         payment.updated_at = datetime.now(timezone.utc)
         await self.db.flush()
 
@@ -52,7 +52,7 @@ class RecoveryService:
         if not payment:
             return None
 
-        payment.status = PaymentStatus.RECOVERED
+        payment.status = PaymentStatus.RECOVERED.value
         payment.updated_at = datetime.now(timezone.utc)
         await self.db.flush()
 
@@ -70,7 +70,7 @@ class RecoveryService:
         return {
             "payment_id": str(payment.id),
             "razorpay_order_id": payment.razorpay_order_id,
-            "status": payment.status.value,
+            "status": payment.status,
             "recovery_email_sent": (
                 payment.recovery_email_sent.isoformat()
                 if payment.recovery_email_sent

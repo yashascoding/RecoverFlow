@@ -9,7 +9,6 @@ from fastapi.responses import JSONResponse
 
 from app.core.config import get_settings
 from app.core.logging import get_logger, setup_logging
-from app.db.database import init_db
 
 settings = get_settings()
 setup_logging(settings.LOG_LEVEL)
@@ -22,8 +21,7 @@ async def lifespan(app: FastAPI):
         "app_starting",
         extra={"env": settings.ENVIRONMENT.value, "version": settings.APP_VERSION},
     )
-    await init_db()
-    logger.info("database_initialized")
+    logger.info("run_alembic_migrations_before_starting")
     yield
     logger.info("app_shutting_down")
 
