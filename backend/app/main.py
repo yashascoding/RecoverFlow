@@ -80,10 +80,12 @@ async def request_id_middleware(request: Request, call_next):
 from app.api.health import router as health_router
 from app.api.payments import router as payments_router
 from app.api.webhooks import router as webhook_router
+from app.api.customers import router as customer_router
 
 app.include_router(health_router, prefix="/api")
 app.include_router(payments_router, prefix="/api")
 app.include_router(webhook_router, prefix="/api")
+app.include_router(customer_router, prefix="/api")
 
 
 @app.get("/")

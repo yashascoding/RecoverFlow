@@ -62,10 +62,12 @@ async def _process_webhook_event(
             payment_svc = PaymentService(db)
             recovery_svc = RecoveryService(db)
 
+            entity = payload.get("payment", {}).get("entity", {})
+            order_id = entity.get("order_id")
+            payment_id = entity.get("id")
+            dedup = f"razorpay:{payment_id}:{event}" if payment_id else None
+
             if event == "payment.captured":
-                entity = payload.get("payment", {}).get("entity", {})
-                order_id = entity.get("order_id")
-                payment_id = entity.get("id")
                 if order_id:
                     payment = await payment_svc.update_payment_status(
                         order_id=order_id,
@@ -75,28 +77,25 @@ async def _process_webhook_event(
                     await db.commit()
                     logger.info("webhook_payment_captured", extra={"order_id": order_id})
 
-                    if payment:
-                        await event_bus.dispatch(
-                            PaymentCapturedEvent(
-                                source=EventSource.WEBHOOK,
-                                payload=PaymentEventPayload(
-                                    payment_id=payment.id,
-                                    razorpay_order_id=payment.razorpay_order_id,
-                                    razorpay_payment_id=payment.razorpay_payment_id,
-                                    customer_id=payment.customer_id,
-                                    customer_email=payment.customer_email,
-                                    amount=payment.amount,
-                                    currency=payment.currency,
-                                    status=payment.status,
-                                ),
+                    await event_bus.dispatch(
+                        PaymentCapturedEvent(
+                            source=EventSource.WEBHOOK,
+                            dedup_key=dedup,
+                            payload=PaymentEventPayload(
+                                payment_id=payment.id if payment else uuid.uuid4(),
+                                razorpay_order_id=order_id,
+                                razorpay_payment_id=payment_id,
+                                customer_id=payment.customer_id if payment else None,
+                                customer_email=payment.customer_email if payment else "",
+                                amount=payment.amount if payment else entity.get("amount", 0),
+                                currency=payment.currency if payment else entity.get("currency", "INR"),
+                                status=payment.status if payment else "captured",
                             ),
-                            raw_payload=raw_payload,
-                        )
+                        ),
+                        raw_payload=raw_payload,
+                    )
 
             elif event == "payment.failed":
-                entity = payload.get("payment", {}).get("entity", {})
-                order_id = entity.get("order_id")
-                payment_id = entity.get("id")
                 if order_id:
                     payment = await payment_svc.update_payment_status(
                         order_id=order_id,
@@ -106,24 +105,24 @@ async def _process_webhook_event(
                     await db.commit()
                     logger.info("webhook_payment_failed", extra={"order_id": order_id})
 
-                    if payment:
-                        await event_bus.dispatch(
-                            PaymentFailedEvent(
-                                source=EventSource.WEBHOOK,
-                                payload=PaymentEventPayload(
-                                    payment_id=payment.id,
-                                    razorpay_order_id=payment.razorpay_order_id,
-                                    razorpay_payment_id=payment.razorpay_payment_id,
-                                    customer_id=payment.customer_id,
-                                    customer_email=payment.customer_email,
-                                    amount=payment.amount,
-                                    currency=payment.currency,
-                                    status=payment.status,
-                                ),
-                                failure_reason=entity.get("error_description"),
+                    await event_bus.dispatch(
+                        PaymentFailedEvent(
+                            source=EventSource.WEBHOOK,
+                            dedup_key=dedup,
+                            payload=PaymentEventPayload(
+                                payment_id=payment.id if payment else uuid.uuid4(),
+                                razorpay_order_id=order_id,
+                                razorpay_payment_id=payment_id,
+                                customer_id=payment.customer_id if payment else None,
+                                customer_email=payment.customer_email if payment else "",
+                                amount=payment.amount if payment else entity.get("amount", 0),
+                                currency=payment.currency if payment else entity.get("currency", "INR"),
+                                status=payment.status if payment else "failed",
                             ),
-                            raw_payload=raw_payload,
-                        )
+                            failure_reason=entity.get("error_description"),
+                        ),
+                        raw_payload=raw_payload,
+                    )
 
                     try:
                         await recovery_svc.initiate_recovery(order_id)
@@ -136,9 +135,6 @@ async def _process_webhook_event(
                         )
 
             elif event == "payment.authorized":
-                entity = payload.get("payment", {}).get("entity", {})
-                order_id = entity.get("order_id")
-                payment_id = entity.get("id")
                 if order_id:
                     payment = await payment_svc.update_payment_status(
                         order_id=order_id,
@@ -147,27 +143,25 @@ async def _process_webhook_event(
                     )
                     await db.commit()
 
-                    if payment:
-                        await event_bus.dispatch(
-                            PaymentAuthorizedEvent(
-                                source=EventSource.WEBHOOK,
-                                payload=PaymentEventPayload(
-                                    payment_id=payment.id,
-                                    razorpay_order_id=payment.razorpay_order_id,
-                                    razorpay_payment_id=payment.razorpay_payment_id,
-                                    customer_id=payment.customer_id,
-                                    customer_email=payment.customer_email,
-                                    amount=payment.amount,
-                                    currency=payment.currency,
-                                    status=payment.status,
-                                ),
+                    await event_bus.dispatch(
+                        PaymentAuthorizedEvent(
+                            source=EventSource.WEBHOOK,
+                            dedup_key=dedup,
+                            payload=PaymentEventPayload(
+                                payment_id=payment.id if payment else uuid.uuid4(),
+                                razorpay_order_id=order_id,
+                                razorpay_payment_id=payment_id,
+                                customer_id=payment.customer_id if payment else None,
+                                customer_email=payment.customer_email if payment else "",
+                                amount=payment.amount if payment else entity.get("amount", 0),
+                                currency=payment.currency if payment else entity.get("currency", "INR"),
+                                status=payment.status if payment else "authorized",
                             ),
-                            raw_payload=raw_payload,
-                        )
+                        ),
+                        raw_payload=raw_payload,
+                    )
 
             elif event == "payment.refunded":
-                entity = payload.get("payment", {}).get("entity", {})
-                order_id = entity.get("order_id")
                 if order_id:
                     payment = await payment_svc.update_payment_status(
                         order_id=order_id,
@@ -175,22 +169,22 @@ async def _process_webhook_event(
                     )
                     await db.commit()
 
-                    if payment:
-                        await event_bus.dispatch(
-                            PaymentRefundedEvent(
-                                source=EventSource.WEBHOOK,
-                                payload=PaymentEventPayload(
-                                    payment_id=payment.id,
-                                    razorpay_order_id=payment.razorpay_order_id,
-                                    razorpay_payment_id=payment.razorpay_payment_id,
-                                    customer_id=payment.customer_id,
-                                    customer_email=payment.customer_email,
-                                    amount=payment.amount,
-                                    currency=payment.currency,
-                                    status=payment.status,
-                                ),
+                    await event_bus.dispatch(
+                        PaymentRefundedEvent(
+                            source=EventSource.WEBHOOK,
+                            dedup_key=dedup,
+                            payload=PaymentEventPayload(
+                                payment_id=payment.id if payment else uuid.uuid4(),
+                                razorpay_order_id=order_id,
+                                razorpay_payment_id=payment_id,
+                                customer_id=payment.customer_id if payment else None,
+                                customer_email=payment.customer_email if payment else "",
+                                amount=payment.amount if payment else entity.get("amount", 0),
+                                currency=payment.currency if payment else entity.get("currency", "INR"),
+                                status=payment.status if payment else "refunded",
                             ),
-                            raw_payload=raw_payload,
+                        ),
+                        raw_payload=raw_payload,
                         )
 
             else:
@@ -302,9 +296,11 @@ async def _process_resend_event(
 
             # ── dispatch internal event to event bus ──
             if resend_event == "email.delivered" and email_msg:
+                dedup = f"resend:{provider_message_id}:{resend_event}"
                 await event_bus.dispatch(
                     EmailDeliveredEvent(
                         source=EventSource.WEBHOOK,
+                        dedup_key=dedup,
                         payload=EmailEventPayload(
                             message_id=email_msg.id,
                             customer_id=email_msg.customer_id,
@@ -318,9 +314,11 @@ async def _process_resend_event(
                 )
 
             elif resend_event == "email.opened" and email_msg:
+                dedup = f"resend:{provider_message_id}:{resend_event}"
                 await event_bus.dispatch(
                     EmailOpenedEvent(
                         source=EventSource.WEBHOOK,
+                        dedup_key=dedup,
                         payload=EmailEventPayload(
                             message_id=email_msg.id,
                             customer_id=email_msg.customer_id,
@@ -334,9 +332,11 @@ async def _process_resend_event(
                 )
 
             elif resend_event == "email.bounced" and email_msg:
+                dedup = f"resend:{provider_message_id}:{resend_event}"
                 await event_bus.dispatch(
                     EmailBouncedEvent(
                         source=EventSource.WEBHOOK,
+                        dedup_key=dedup,
                         payload=EmailEventPayload(
                             message_id=email_msg.id,
                             customer_id=email_msg.customer_id,
@@ -351,9 +351,11 @@ async def _process_resend_event(
                 )
 
             elif resend_event == "email.complained" and email_msg:
+                dedup = f"resend:{provider_message_id}:{resend_event}"
                 await event_bus.dispatch(
                     EmailComplainedEvent(
                         source=EventSource.WEBHOOK,
+                        dedup_key=dedup,
                         payload=EmailEventPayload(
                             message_id=email_msg.id,
                             customer_id=email_msg.customer_id,

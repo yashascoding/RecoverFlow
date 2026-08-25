@@ -32,6 +32,7 @@ class BaseEvent(BaseModel):
     source: EventSource = Field(..., description="Subsystem that emitted the event")
     version: int = Field(default=1, description="Schema version for backward compat")
     metadata: dict[str, Any] = Field(default_factory=dict, description="Arbitrary extra data")
+    dedup_key: str | None = Field(default=None, description="Business-level dedup key for duplicate detection")
 
 
 # ---------------------------------------------------------------------------

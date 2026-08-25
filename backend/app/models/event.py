@@ -65,6 +65,10 @@ class Event(Base):
     last_error: Mapped[str | None] = mapped_column(
         Text, nullable=True,
     )
+    dedup_key: Mapped[str | None] = mapped_column(
+        String(512), nullable=True, unique=True, index=True,
+        comment="Business-level dedup key, e.g. razorpay:pay_id:event_type",
+    )
 
     __table_args__ = (
         Index("ix_events_event_type", "event_type"),

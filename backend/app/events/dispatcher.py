@@ -52,13 +52,13 @@ class EventBus:
             raw_payload: The original unparsed webhook body (e.g. full Razorpay JSON).
 
         Returns:
-          - DUPLICATE if event_id already existed
+          - DUPLICATE if event_id or dedup_key already existed
           - PENDING   if event was persisted and queued for async processing
         """
         aggregate_id = self._extract_aggregate_id(event)
 
         async with async_session_factory() as db:
-            # ── duplicate check ──────────────────────────────────────
+            # ── duplicate check by event_id ───────────────────────────
             existing = await db.execute(
                 select(Event).where(Event.event_id == event.event_id)
             )
@@ -69,6 +69,18 @@ class EventBus:
                 )
                 return EventStatus.DUPLICATE
 
+            # ── duplicate check by dedup_key (business-level) ─────────
+            if event.dedup_key:
+                existing_dedup = await db.execute(
+                    select(Event).where(Event.dedup_key == event.dedup_key)
+                )
+                if existing_dedup.scalar_one_or_none() is not None:
+                    logger.info(
+                        "event_duplicate_skipped_dedup_key",
+                        extra={"dedup_key": event.dedup_key, "event_type": event.event_type},
+                    )
+                    return EventStatus.DUPLICATE
+
             # ── persist as pending ───────────────────────────────────
             db_event = Event(
                 event_id=event.event_id,
@@ -78,6 +90,7 @@ class EventBus:
                 payload=event.model_dump(mode="json"),
                 raw_payload=raw_payload,
                 status=EventStatus.PENDING.value,
+                dedup_key=event.dedup_key,
             )
             db.add(db_event)
             await db.commit()
