@@ -71,8 +71,6 @@ class Event(Base):
     )
 
     __table_args__ = (
-        Index("ix_events_event_type", "event_type"),
-        Index("ix_events_aggregate_id", "aggregate_id"),
         Index("ix_events_status", "status"),
         Index("ix_events_created_at", "created_at"),
     )
