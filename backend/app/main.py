@@ -81,11 +81,21 @@ from app.api.health import router as health_router
 from app.api.payments import router as payments_router
 from app.api.webhooks import router as webhook_router
 from app.api.customers import router as customer_router
+from app.api.recovery_attempts import router as recovery_attempts_router
+from app.api.agents import router as agents_router
+from app.api.policies import router as policies_router
+from app.api.audit import router as audit_router
+from app.api.consent import router as consent_router
 
 app.include_router(health_router, prefix="/api")
 app.include_router(payments_router, prefix="/api")
 app.include_router(webhook_router, prefix="/api")
 app.include_router(customer_router, prefix="/api")
+app.include_router(recovery_attempts_router, prefix="/api")
+app.include_router(agents_router, prefix="/api")
+app.include_router(policies_router, prefix="/api")
+app.include_router(audit_router, prefix="/api")
+app.include_router(consent_router, prefix="/api")
 
 
 @app.get("/")

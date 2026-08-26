@@ -16,8 +16,20 @@ class PaymentStatus(str, enum.Enum):
     AUTHORIZED = "authorized"
     CAPTURED = "captured"
     FAILED = "failed"
+    RECOVERY_PENDING = "recovery_pending"
     REFUNDED = "refunded"
     RECOVERED = "recovered"
+
+
+VALID_TRANSITIONS: dict[PaymentStatus, set[PaymentStatus]] = {
+    PaymentStatus.CREATED: {PaymentStatus.AUTHORIZED, PaymentStatus.FAILED},
+    PaymentStatus.AUTHORIZED: {PaymentStatus.CAPTURED, PaymentStatus.FAILED},
+    PaymentStatus.CAPTURED: {PaymentStatus.REFUNDED},
+    PaymentStatus.FAILED: {PaymentStatus.RECOVERY_PENDING},
+    PaymentStatus.RECOVERY_PENDING: {PaymentStatus.RECOVERED, PaymentStatus.FAILED},
+    PaymentStatus.REFUNDED: set(),
+    PaymentStatus.RECOVERED: set(),
+}
 
 
 class Payment(Base):
@@ -44,6 +56,7 @@ class Payment(Base):
         nullable=False,
         default=PaymentStatus.CREATED.value,
     )
+    failure_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     recovery_email_sent: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )

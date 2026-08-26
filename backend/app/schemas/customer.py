@@ -11,6 +11,13 @@ class CustomerCreate(BaseModel):
     email: EmailStr
     name: str | None = Field(default=None, max_length=255)
     phone: str | None = Field(default=None, max_length=20)
+    status: str = Field(default="active", pattern="^(active|inactive|blocked)$")
+
+
+class CustomerUpdate(BaseModel):
+    name: str | None = Field(default=None, max_length=255)
+    phone: str | None = Field(default=None, max_length=20)
+    status: str | None = Field(default=None, pattern="^(active|inactive|blocked)$")
 
 
 class CustomerResponse(BaseModel):

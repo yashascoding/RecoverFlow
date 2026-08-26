@@ -4,7 +4,7 @@ import enum
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, Enum, ForeignKey, Index, Integer, String, Text, func
+from sqlalchemy import DateTime, ForeignKey, Index, Integer, String, Text, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -40,14 +40,16 @@ class RecoveryAttempt(Base):
     payment_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("payments.id", ondelete="CASCADE"), nullable=False
     )
-    channel: Mapped[RecoveryChannel] = mapped_column(
-        Enum(RecoveryChannel, name="recovery_channel"),
+    amount: Mapped[int] = mapped_column(nullable=False, default=0, comment="Amount in paise")
+    channel: Mapped[str] = mapped_column(
+        String(50),
         nullable=False,
+        default=RecoveryChannel.EMAIL.value,
     )
-    status: Mapped[RecoveryAttemptStatus] = mapped_column(
-        Enum(RecoveryAttemptStatus, name="recovery_attempt_status"),
+    status: Mapped[str] = mapped_column(
+        String(50),
         nullable=False,
-        default=RecoveryAttemptStatus.PENDING,
+        default=RecoveryAttemptStatus.PENDING.value,
     )
     attempt_number: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     email_message_id: Mapped[uuid.UUID | None] = mapped_column(

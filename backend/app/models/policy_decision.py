@@ -4,7 +4,7 @@ import enum
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, Enum, Index, String, Text, func
+from sqlalchemy import DateTime, Index, String, Text, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -32,12 +32,12 @@ class PolicyDecision(Base):
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
-    decision_type: Mapped[PolicyDecisionType] = mapped_column(
-        Enum(PolicyDecisionType, name="policy_decision_type"),
+    decision_type: Mapped[str] = mapped_column(
+        String(50),
         nullable=False,
     )
-    outcome: Mapped[PolicyOutcome] = mapped_column(
-        Enum(PolicyOutcome, name="policy_outcome"),
+    outcome: Mapped[str] = mapped_column(
+        String(50),
         nullable=False,
     )
     payment_id: Mapped[uuid.UUID | None] = mapped_column(

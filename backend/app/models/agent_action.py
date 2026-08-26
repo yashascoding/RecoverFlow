@@ -4,7 +4,7 @@ import enum
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, Enum, ForeignKey, Index, String, Text, func
+from sqlalchemy import DateTime, ForeignKey, Index, String, Text, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -37,14 +37,14 @@ class AgentAction(Base):
     run_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("agent_runs.id", ondelete="CASCADE"), nullable=False
     )
-    action_type: Mapped[AgentActionType] = mapped_column(
-        Enum(AgentActionType, name="agent_action_type"),
+    action_type: Mapped[str] = mapped_column(
+        String(50),
         nullable=False,
     )
-    status: Mapped[AgentActionStatus] = mapped_column(
-        Enum(AgentActionStatus, name="agent_action_status"),
+    status: Mapped[str] = mapped_column(
+        String(50),
         nullable=False,
-        default=AgentActionStatus.PENDING,
+        default=AgentActionStatus.PENDING.value,
     )
     target: Mapped[str | None] = mapped_column(String(255), nullable=True, comment="Target resource/identifier")
     payload: Mapped[dict | None] = mapped_column(JSONB, nullable=True)

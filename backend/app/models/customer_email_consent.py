@@ -4,7 +4,7 @@ import enum
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, Enum, ForeignKey, Index, String, UniqueConstraint, func
+from sqlalchemy import DateTime, ForeignKey, Index, String, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -33,14 +33,15 @@ class CustomerEmailConsent(Base):
     customer_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("customers.id", ondelete="CASCADE"), nullable=False
     )
-    channel: Mapped[ConsentChannel] = mapped_column(
-        Enum(ConsentChannel, name="consent_channel"),
+    channel: Mapped[str] = mapped_column(
+        String(50),
         nullable=False,
+        default=ConsentChannel.EMAIL.value,
     )
-    consent_status: Mapped[ConsentStatus] = mapped_column(
-        Enum(ConsentStatus, name="consent_status"),
+    consent_status: Mapped[str] = mapped_column(
+        String(50),
         nullable=False,
-        default=ConsentStatus.GRANTED,
+        default=ConsentStatus.GRANTED.value,
     )
     consented_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

@@ -22,12 +22,13 @@ class CustomerService:
         email: str,
         name: str | None = None,
         phone: str | None = None,
+        status: str = CustomerStatus.ACTIVE.value,
     ) -> Customer:
         customer = Customer(
             email=email,
             name=name,
             phone=phone,
-            status=CustomerStatus.ACTIVE.value,
+            status=status,
         )
         self.db.add(customer)
         await self.db.flush()
@@ -36,6 +37,27 @@ class CustomerService:
             "customer_created",
             extra={"customer_id": str(customer.id), "email": email},
         )
+        return customer
+
+    async def update_customer(
+        self,
+        customer_id: uuid.UUID,
+        name: str | None = None,
+        phone: str | None = None,
+        status: str | None = None,
+    ) -> Customer | None:
+        customer = await self.get_customer_by_id(customer_id)
+        if not customer:
+            return None
+        if name is not None:
+            customer.name = name
+        if phone is not None:
+            customer.phone = phone
+        if status is not None:
+            customer.status = status
+        await self.db.flush()
+        await self.db.refresh(customer)
+        logger.info("customer_updated", extra={"customer_id": str(customer_id)})
         return customer
 
     async def get_customer_by_id(self, customer_id: uuid.UUID) -> Customer | None:

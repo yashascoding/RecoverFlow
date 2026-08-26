@@ -13,6 +13,27 @@ resend.api_key = settings.RESEND_API_KEY
 FROM_EMAIL = "onboarding@resend.dev"
 
 
+class ResendEmailService:
+    async def send_email(
+        self,
+        to: str,
+        subject: str,
+        body: str,
+        from_email: str = FROM_EMAIL,
+    ) -> dict:
+        response = resend.Emails.send({
+            "from": from_email,
+            "to": [to],
+            "subject": subject,
+            "html": body,
+        })
+        logger.info(
+            "email_sent",
+            extra={"to": to, "subject": subject, "provider_message_id": response.get("id")},
+        )
+        return response
+
+
 def send_recovery_email(
     to_email: str,
     customer_name: str,

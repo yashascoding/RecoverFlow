@@ -4,7 +4,7 @@ import enum
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, Enum, Index, Text, func
+from sqlalchemy import DateTime, Index, String, Text, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -31,14 +31,14 @@ class AgentRun(Base):
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
-    agent_type: Mapped[AgentType] = mapped_column(
-        Enum(AgentType, name="agent_type"),
+    agent_type: Mapped[str] = mapped_column(
+        String(50),
         nullable=False,
     )
-    status: Mapped[AgentRunStatus] = mapped_column(
-        Enum(AgentRunStatus, name="agent_run_status"),
+    status: Mapped[str] = mapped_column(
+        String(50),
         nullable=False,
-        default=AgentRunStatus.PENDING,
+        default=AgentRunStatus.PENDING.value,
     )
     payment_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), nullable=True, index=True

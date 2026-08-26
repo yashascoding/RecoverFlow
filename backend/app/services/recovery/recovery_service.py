@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.logging import get_logger
 from app.models.payment import Payment, PaymentStatus
 from app.services.payments.payment_service import PaymentService
+from app.services.payments.payment_transition_service import PaymentTransitionService
 
 logger = get_logger(__name__)
 
@@ -16,30 +17,10 @@ class RecoveryService:
     def __init__(self, db: AsyncSession) -> None:
         self.db = db
         self.payment_service = PaymentService(db)
+        self.transition_service = PaymentTransitionService(db)
 
     async def initiate_recovery(self, order_id: str) -> dict:
-        payment = await self.payment_service.get_payment_by_order_id(order_id)
-        if not payment:
-            raise ValueError(f"Payment not found for order: {order_id}")
-
-        if payment.status not in (
-            PaymentStatus.FAILED,
-            PaymentStatus.CREATED,
-        ):
-            raise ValueError(
-                f"Cannot initiate recovery for payment in status: {payment.status}"
-            )
-
-        payment.recovery_email_sent = datetime.now(timezone.utc)
-        payment.status = PaymentStatus.RECOVERED.value
-        payment.updated_at = datetime.now(timezone.utc)
-        await self.db.flush()
-
-        logger.info(
-            "recovery_initiated",
-            extra={"order_id": order_id, "payment_id": str(payment.id)},
-        )
-
+        payment = await self.transition_service.initiate_recovery(order_id)
         return {
             "payment_id": str(payment.id),
             "order_id": order_id,
@@ -47,20 +28,8 @@ class RecoveryService:
             "recovery_email_sent": payment.recovery_email_sent.isoformat(),
         }
 
-    async def record_recovery_success(self, order_id: str) -> Payment | None:
-        payment = await self.payment_service.get_payment_by_order_id(order_id)
-        if not payment:
-            return None
-
-        payment.status = PaymentStatus.RECOVERED.value
-        payment.updated_at = datetime.now(timezone.utc)
-        await self.db.flush()
-
-        logger.info(
-            "recovery_success_recorded",
-            extra={"order_id": order_id},
-        )
-        return payment
+    async def record_recovery_success(self, order_id: str) -> Payment:
+        return await self.transition_service.record_recovery_success(order_id)
 
     async def get_recovery_status(self, payment_id: uuid.UUID) -> dict | None:
         payment = await self.payment_service.get_payment_by_id(payment_id)
@@ -95,6 +64,14 @@ class RecoveryService:
 
         if payment.status == PaymentStatus.RECOVERED:
             raise ValueError("Payment already recovered")
+
+        if payment.status not in (
+            PaymentStatus.RECOVERY_PENDING.value,
+            PaymentStatus.FAILED.value,
+        ):
+            raise ValueError(
+                f"Cannot retry recovery for payment in status: {payment.status}"
+            )
 
         payment.recovery_email_sent = datetime.now(timezone.utc)
         payment.updated_at = datetime.now(timezone.utc)

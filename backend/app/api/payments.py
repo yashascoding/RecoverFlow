@@ -11,8 +11,13 @@ from app.schemas.payment import (
     PaymentCreate,
     PaymentListResponse,
     PaymentResponse,
+    PaymentStatusUpdate,
 )
 from app.services.payments.payment_service import PaymentService
+from app.services.payments.payment_transition_service import (
+    InvalidTransitionError,
+    PaymentTransitionService,
+)
 from app.services.payments.razorpay_service import razorpay_service
 
 router = APIRouter(prefix="/payments", tags=["payments"])
@@ -94,3 +99,30 @@ async def list_payments(
         page_size=page_size,
         pages=ceil(total / page_size) if total else 0,
     )
+
+
+@router.patch("/{payment_id}/status", response_model=PaymentResponse)
+async def update_payment_status(
+    payment_id: uuid.UUID,
+    body: PaymentStatusUpdate,
+    db: AsyncSession = Depends(get_db),
+) -> PaymentResponse:
+    svc = PaymentTransitionService(db)
+    try:
+        payment = await svc.transition(
+            payment_id=str(payment_id),
+            target_status=body.status.value,
+            failure_reason=body.failure_reason,
+        )
+    except InvalidTransitionError as e:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(e),
+        )
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e),
+        )
+    await db.commit()
+    return PaymentResponse.model_validate(payment)

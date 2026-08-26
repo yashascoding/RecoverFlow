@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.database import get_db
-from app.schemas.customer import CustomerCreate, CustomerListResponse, CustomerResponse
+from app.schemas.customer import CustomerCreate, CustomerListResponse, CustomerResponse, CustomerUpdate
 from app.services.customers.customer_service import CustomerService
 
 router = APIRouter(prefix="/customers", tags=["customers"])
@@ -31,7 +31,30 @@ async def create_customer(
         email=body.email,
         name=body.name,
         phone=body.phone,
+        status=body.status,
     )
+    await db.commit()
+    return CustomerResponse.model_validate(customer)
+
+
+@router.patch("/{customer_id}", response_model=CustomerResponse)
+async def update_customer(
+    customer_id: uuid.UUID,
+    body: CustomerUpdate,
+    db: AsyncSession = Depends(get_db),
+) -> CustomerResponse:
+    svc = CustomerService(db)
+    customer = await svc.update_customer(
+        customer_id=customer_id,
+        name=body.name,
+        phone=body.phone,
+        status=body.status,
+    )
+    if not customer:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Customer not found",
+        )
     await db.commit()
     return CustomerResponse.model_validate(customer)
 

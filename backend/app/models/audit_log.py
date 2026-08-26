@@ -4,7 +4,7 @@ import enum
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, Enum, Index, String, Text, func
+from sqlalchemy import DateTime, Index, String, Text, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -33,8 +33,8 @@ class AuditLog(Base):
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
     actor: Mapped[str | None] = mapped_column(String(255), nullable=True, comment="User, system, or agent identifier")
-    action: Mapped[AuditAction] = mapped_column(
-        Enum(AuditAction, name="audit_action"),
+    action: Mapped[str] = mapped_column(
+        String(50),
         nullable=False,
     )
     resource_type: Mapped[str | None] = mapped_column(String(100), nullable=True, index=True)

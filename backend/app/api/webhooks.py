@@ -28,6 +28,7 @@ from app.schemas.event import (
 from app.schemas.payment import RecoveryStatusResponse, WebhookEventResponse
 from app.services.payments.payment_service import PaymentService
 from app.services.payments.razorpay_service import razorpay_service
+from app.services.recovery.recovery_pipeline import RecoveryPipeline
 from app.services.recovery.recovery_service import RecoveryService
 
 logger = get_logger(__name__)
@@ -97,6 +98,10 @@ async def _process_webhook_event(
 
             elif event == "payment.failed":
                 if order_id:
+                    # Capture original status before update
+                    existing = await payment_svc.get_payment_by_order_id(order_id)
+                    original_status = existing.status if existing else None
+
                     payment = await payment_svc.update_payment_status(
                         order_id=order_id,
                         status="failed",
@@ -124,15 +129,18 @@ async def _process_webhook_event(
                         raw_payload=raw_payload,
                     )
 
-                    try:
-                        await recovery_svc.initiate_recovery(order_id)
-                        await db.commit()
-                        logger.info("recovery_auto_initiated", extra={"order_id": order_id})
-                    except Exception as e:
-                        logger.error(
-                            "recovery_initiation_failed",
-                            extra={"order_id": order_id, "error": str(e)},
-                        )
+                    # Run the full recovery pipeline
+                    pipeline = RecoveryPipeline(db)
+                    result = await pipeline.handle_payment_failure(
+                        order_id=order_id,
+                        failure_reason=entity.get("error_description"),
+                        razorpay_payment_id=payment_id,
+                        original_status=original_status,
+                    )
+                    logger.info(
+                        "recovery_pipeline_result",
+                        extra={"order_id": order_id, "result": result.to_dict()},
+                    )
 
             elif event == "payment.authorized":
                 if order_id:

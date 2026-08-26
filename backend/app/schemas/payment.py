@@ -27,6 +27,7 @@ class PaymentResponse(BaseModel):
     amount: int
     currency: str
     status: PaymentStatus
+    failure_reason: str | None = None
     recovery_email_sent: datetime | None
     recovery_email_opened: datetime | None
     payment_link_clicked: datetime | None
@@ -49,6 +50,11 @@ class PaymentListResponse(BaseModel):
     page: int
     page_size: int
     pages: int
+
+
+class PaymentStatusUpdate(BaseModel):
+    status: PaymentStatus
+    failure_reason: str | None = None
 
 
 class WebhookEventResponse(BaseModel):
