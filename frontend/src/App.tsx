@@ -1,6 +1,7 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import { Layout } from '@/components/layout/Layout'
+import { LandingPage } from '@/pages/landing/LandingPage'
 import { OverviewPage } from '@/pages/overview/OverviewPage'
 import { PaymentsPage } from '@/pages/payments/PaymentsPage'
 import { PaymentDetailPage } from '@/pages/payments/PaymentDetailPage'
@@ -28,9 +29,9 @@ function App() {
           },
         }}
       />
-      <Layout>
-        <Routes>
-          <Route path="/" element={<Navigate to="/overview" replace />} />
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route element={<Layout />}>
           <Route path="/overview" element={<OverviewPage />} />
           <Route path="/payments" element={<PaymentsPage />} />
           <Route path="/payments/:id" element={<PaymentDetailPage />} />
@@ -42,8 +43,8 @@ function App() {
           <Route path="/audit" element={<AuditPage />} />
           <Route path="/policies" element={<PoliciesPage />} />
           <Route path="/replay/:paymentId" element={<DecisionReplayPage />} />
-        </Routes>
-      </Layout>
+        </Route>
+      </Routes>
     </BrowserRouter>
   )
 }
