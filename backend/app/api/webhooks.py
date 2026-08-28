@@ -71,13 +71,26 @@ async def _process_webhook_event(
 
             if event == "payment.captured":
                 if order_id:
-                    payment = await payment_svc.update_payment_status(
-                        order_id=order_id,
-                        status="captured",
-                        payment_id=payment_id,
-                    )
-                    await db.commit()
-                    logger.info("webhook_payment_captured", extra={"order_id": order_id})
+                    from app.services.payments.payment_transition_service import PaymentTransitionService
+                    from app.models.payment import PaymentStatus
+
+                    existing = await payment_svc.get_payment_by_order_id(order_id)
+
+                    if existing and existing.status == PaymentStatus.RECOVERY_PENDING.value:
+                        transition_svc = PaymentTransitionService(db)
+                        payment = await transition_svc.record_recovery_success(order_id)
+                        if payment_id:
+                            payment.razorpay_payment_id = payment_id
+                        await db.commit()
+                        logger.info("webhook_recovery_confirmed", extra={"order_id": order_id})
+                    else:
+                        payment = await payment_svc.update_payment_status(
+                            order_id=order_id,
+                            status="captured",
+                            payment_id=payment_id,
+                        )
+                        await db.commit()
+                        logger.info("webhook_payment_captured", extra={"order_id": order_id})
 
                     await event_bus.dispatch(
                         PaymentCapturedEvent(

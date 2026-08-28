@@ -73,8 +73,20 @@ class ResendEmailService:
         body: str,
         from_email: str | None = None,
     ) -> EmailSendResult:
-        """Send a single email. Returns a structured result."""
+        """Send a single email. Returns a structured result.
+
+        In development mode, redirects to TEST_EMAIL so Resend test mode
+        doesn't reject non-verified addresses.
+        """
         sender = from_email or settings.RECOVERY_EMAIL_FROM or DEFAULT_FROM_EMAIL
+        original_recipient = to
+
+        if not settings.is_production and settings.TEST_EMAIL:
+            to = settings.TEST_EMAIL
+            logger.info(
+                "email_redirect_dev_mode",
+                extra={"original_recipient": original_recipient, "redirected_to": to},
+            )
 
         last_error: Exception | None = None
         for attempt in range(1, _MAX_RETRIES + 1):
@@ -91,6 +103,7 @@ class ResendEmailService:
                     "email_sent",
                     extra={
                         "to": to,
+                        "original_recipient": original_recipient,
                         "subject": subject,
                         "provider_message_id": provider_id,
                         "attempt": attempt,

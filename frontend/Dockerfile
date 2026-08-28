@@ -22,6 +22,10 @@ RUN echo 'server { \
         try_files $uri $uri/ /index.html; \
     } \
     \
+    location ~* \.(?:html)$ { \
+        add_header Cache-Control "no-cache, must-revalidate"; \
+    } \
+    \
     location /api/ { \
         proxy_pass http://backend:8000; \
         proxy_set_header Host $host; \

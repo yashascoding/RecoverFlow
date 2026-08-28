@@ -44,6 +44,7 @@ class Settings(BaseSettings):
     RESEND_API_KEY: str = ""
     RESEND_WEBHOOK_SECRET: str = ""
     RECOVERY_EMAIL_FROM: str = ""
+    TEST_EMAIL: str = ""
 
     # Recovery policy
     RECOVERY_LINK_TTL_MINUTES: int = 1440

@@ -62,7 +62,7 @@ class RecoveryPipelineResult:
 class RecoveryPipeline:
     """Orchestrates the full recovery flow:
 
-    payment failed → consent check → policy evaluation →
+    payment failed → AI agent diagnosis → consent check → policy evaluation →
     payment transition → recovery attempt → send email → audit log
     """
 
@@ -175,6 +175,32 @@ class RecoveryPipeline:
                 success=False, reason="Customer has not consented to email", payment_id=payment.id,
             )
 
+        # 3.5 Run AI agent for diagnosis
+        agent_result = None
+        try:
+            from app.services.agents.recovery_agent import RecoveryAgent
+            agent = RecoveryAgent(self.db)
+            agent_result = await agent.run({
+                "payment_id": str(payment.id),
+                "customer_id": str(payment.customer_id),
+                "email": payment.customer_email,
+                "order_id": order_id,
+                "failure_reason": failure_reason,
+            })
+            logger.info(
+                "agent_diagnosis_completed",
+                extra={
+                    "payment_id": str(payment.id),
+                    "agent_success": agent_result.get("success", False),
+                    "agent_state": agent_result.get("state", "unknown"),
+                },
+            )
+        except Exception as e:
+            logger.warning(
+                "agent_diagnosis_failed",
+                extra={"payment_id": str(payment.id), "error": str(e)},
+            )
+
         # 4. Run deterministic policy engine
         ctx = PolicyContext(
             has_email_consent=has_consent,
@@ -279,18 +305,27 @@ class RecoveryPipeline:
         email_msg = await self._send_recovery_email(payment, attempt)
 
         # 7. Audit log
+        audit_payload = {
+            "recovery_attempt_id": str(attempt.id),
+            "email_message_id": str(email_msg.id) if email_msg else None,
+            "failure_reason": failure_reason,
+            "amount": payment.amount,
+        }
+        if agent_result and agent_result.get("success"):
+            trace = agent_result.get("trace", {})
+            stages = trace.get("stages", [])
+            if stages:
+                last_stage = stages[-1]
+                diagnosis_data = last_stage.get("output_data", {})
+                audit_payload["agent_diagnosis"] = diagnosis_data.get("diagnosis_summary", {})
+
         audit = await self.audit_svc.create(
             actor="recovery_pipeline",
             action=AuditAction.RECOVERY_ATTEMPTED.value,
             resource_type="payment",
             resource_id=payment.id,
             description=f"Recovery initiated for ₹{payment.amount // 100} — {failure_reason}",
-            payload={
-                "recovery_attempt_id": str(attempt.id),
-                "email_message_id": str(email_msg.id) if email_msg else None,
-                "failure_reason": failure_reason,
-                "amount": payment.amount,
-            },
+            payload=audit_payload,
         )
 
         await self.db.commit()

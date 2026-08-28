@@ -87,6 +87,7 @@ from app.api.policies import router as policies_router
 from app.api.audit import router as audit_router
 from app.api.consent import router as consent_router
 from app.api.recovery_v2 import router as recovery_v2_router
+from app.api.simulate import router as simulate_router
 
 app.include_router(health_router, prefix="/api")
 app.include_router(payments_router, prefix="/api")
@@ -98,6 +99,7 @@ app.include_router(policies_router, prefix="/api")
 app.include_router(audit_router, prefix="/api")
 app.include_router(consent_router, prefix="/api")
 app.include_router(recovery_v2_router, prefix="/api")
+app.include_router(simulate_router, prefix="/api")
 
 
 @app.get("/")

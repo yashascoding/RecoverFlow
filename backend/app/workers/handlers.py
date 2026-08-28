@@ -35,17 +35,78 @@ async def handle_payment_authorized(event_type: str, payload: dict[str, Any]) ->
 
 
 async def handle_payment_captured(event_type: str, payload: dict[str, Any]) -> None:
+    order_id = payload.get("razorpay_order_id")
+    payment_id = payload.get("razorpay_payment_id")
     logger.info(
         "handler_payment_captured",
-        extra={"payment_id": payload.get("payment_id"), "order_id": payload.get("razorpay_order_id")},
+        extra={"payment_id": payload.get("payment_id"), "order_id": order_id},
     )
+
+    if not order_id:
+        return
+
+    async with async_session_factory() as db:
+        from app.services.payments.payment_service import PaymentService
+        from app.services.payments.payment_transition_service import PaymentTransitionService
+        from app.services.audit.audit_service import AuditService
+        from app.models.audit_log import AuditAction
+        from app.models.payment import PaymentStatus
+
+        payment_svc = PaymentService(db)
+        payment = await payment_svc.get_payment_by_order_id(order_id)
+        if not payment:
+            logger.warning("handler_captured_payment_not_found", extra={"order_id": order_id})
+            return
+
+        if payment.status == PaymentStatus.RECOVERY_PENDING.value:
+            transition_svc = PaymentTransitionService(db)
+            payment = await transition_svc.record_recovery_success(order_id)
+            if payment_id:
+                payment.razorpay_payment_id = payment_id
+
+            audit_svc = AuditService(db)
+            await audit_svc.create(
+                actor="recovery_worker",
+                action=AuditAction.PAYMENT_PROCESSED.value,
+                resource_type="payment",
+                resource_id=payment.id,
+                description=f"Payment recovered — ₹{payment.amount // 100} captured after retry",
+                payload={"order_id": order_id, "razorpay_payment_id": payment_id},
+            )
+            await db.commit()
+            logger.info("recovery_confirmed", extra={"order_id": order_id, "payment_id": str(payment.id)})
+        else:
+            payment = await payment_svc.update_payment_status(order_id=order_id, status="captured", payment_id=payment_id)
+            await db.commit()
+            logger.info("handler_captured_status_updated", extra={"order_id": order_id})
 
 
 async def handle_payment_failed(event_type: str, payload: dict[str, Any]) -> None:
+    order_id = payload.get("razorpay_order_id")
+    failure_reason = payload.get("failure_reason")
+    razorpay_payment_id = payload.get("razorpay_payment_id")
     logger.info(
         "handler_payment_failed",
-        extra={"payment_id": payload.get("payment_id"), "order_id": payload.get("razorpay_order_id")},
+        extra={"payment_id": payload.get("payment_id"), "order_id": order_id},
     )
+
+    if not order_id:
+        return
+
+    async with async_session_factory() as db:
+        from app.services.recovery.recovery_pipeline import RecoveryPipeline
+
+        pipeline = RecoveryPipeline(db)
+        result = await pipeline.handle_payment_failure(
+            order_id=order_id,
+            failure_reason=failure_reason,
+            razorpay_payment_id=razorpay_payment_id,
+        )
+        await db.commit()
+        logger.info(
+            "handler_recovery_pipeline_result",
+            extra={"order_id": order_id, "success": result.success, "reason": result.reason},
+        )
 
 
 async def handle_payment_refunded(event_type: str, payload: dict[str, Any]) -> None:
