@@ -20,6 +20,7 @@ from app.schemas.event import (
     PaymentRefundedEvent,
     PaymentEventPayload,
     EmailEventPayload,
+    EmailMessageSentEvent,
     EmailDeliveredEvent,
     EmailOpenedEvent,
     EmailBouncedEvent,
@@ -377,8 +378,22 @@ async def _process_resend_event(
                 )
 
             elif resend_event == "email.sent" and email_msg:
-                # email.message.sent already dispatched when we send via Resend API
-                pass
+                dedup = f"resend:{provider_message_id}:{resend_event}"
+                await event_bus.dispatch(
+                    EmailMessageSentEvent(
+                        source=EventSource.WEBHOOK,
+                        dedup_key=dedup,
+                        payload=EmailEventPayload(
+                            message_id=email_msg.id,
+                            customer_id=email_msg.customer_id,
+                            recipient_email=email_msg.recipient_email,
+                            template_id=email_msg.template_id,
+                            subject=email_msg.subject,
+                            provider_message_id=provider_message_id,
+                        ),
+                    ),
+                    raw_payload=raw_payload,
+                )
 
         except Exception as e:
             await db.rollback()

@@ -47,6 +47,7 @@ services:
       - RAZORPAY_WEBHOOK_SECRET=${RAZORPAY_WEBHOOK_SECRET}
       - RESEND_API_KEY=${RESEND_API_KEY}
       - RESEND_WEBHOOK_SECRET=${RESEND_WEBHOOK_SECRET}
+      - RECOVERY_EMAIL_FROM=${RECOVERY_EMAIL_FROM:-onboarding@resend.dev}
       - TEST_EMAIL=${TEST_EMAIL}
     volumes:
       - ./backend:/app

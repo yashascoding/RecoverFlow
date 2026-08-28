@@ -65,9 +65,10 @@ async def handle_email_message_received(event_type: str, payload: dict[str, Any]
 
 
 async def handle_email_message_sent(event_type: str, payload: dict[str, Any]) -> None:
-    logger.info(
-        "handler_email_sent",
-        extra={"message_id": payload.get("message_id"), "customer_id": payload.get("customer_id")},
+    await _update_email_status(
+        payload.get("provider_message_id"),
+        EmailStatus.SENT,
+        timestamp_field="sent_at",
     )
 
 

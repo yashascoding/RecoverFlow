@@ -18,6 +18,7 @@ from app.models.customer_email_consent import (
     ConsentStatus,
 )
 from app.models.email_message import EmailMessage, EmailDirection, EmailStatus
+from app.models.email_template import EmailTemplate
 from app.models.payment import Payment, PaymentStatus
 from app.models.policy_decision import PolicyDecision, PolicyDecisionType, PolicyOutcome
 from app.models.recovery_attempt import (
@@ -72,10 +73,30 @@ EMAIL_SUBJECTS = [
 ]
 
 EMAIL_TEMPLATES = [
-    "recovery_v1",
-    "recovery_v2",
-    "reminder_v1",
-    "final_notice_v1",
+    {
+        "name": "payment_failure",
+        "subject": "Payment failed — please retry",
+        "body_html": """
+<html>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <h2 style="color: #1a1a1a;">Payment failed.</h2>
+  <p>Your payment could not be processed. No amount was deducted.</p>
+  <p>You can securely retry your payment here:</p>
+  <p style="margin: 24px 0;">
+    <a href="{{payment_link}}"
+       style="display:inline-block;padding:12px 28px;background:#4f46e5;color:#fff;text-decoration:none;border-radius:6px;font-weight:600;">
+      Retry Payment
+    </a>
+  </p>
+  <p style="color:#666;font-size:13px;">If you did not attempt this payment, you can safely ignore this email.</p>
+  <p style="color:#666;font-size:13px;">— RecoverFlow</p>
+</body>
+</html>
+""",
+        "body_text": "Payment failed. Retry here: {{payment_link}}",
+        "description": "Sent when a customer's payment fails. Contains a secure retry link.",
+        "variables": {"payment_link": "URL to the payment retry page"},
+    },
 ]
 
 
@@ -97,6 +118,26 @@ def _random_amount() -> int:
 
 async def seed() -> None:
     async with async_session_factory() as db:
+        # ── Email templates ──────────────────────────────────────────────
+        for tpl_data in EMAIL_TEMPLATES:
+            existing = (await db.execute(
+                select(EmailTemplate).where(EmailTemplate.name == tpl_data["name"])
+            )).scalar_one_or_none()
+            if not existing:
+                tpl = EmailTemplate(
+                    id=_uuid(),
+                    name=tpl_data["name"],
+                    subject=tpl_data["subject"],
+                    body_html=tpl_data["body_html"],
+                    body_text=tpl_data.get("body_text"),
+                    description=tpl_data.get("description"),
+                    variables=tpl_data.get("variables"),
+                    is_active=True,
+                )
+                db.add(tpl)
+        await db.flush()
+        print(f"Seeded {len(EMAIL_TEMPLATES)} email templates")
+
         # ── Customers ─────────────────────────────────────────────────────
         customers: list[Customer] = []
         used_emails: set[str] = set()

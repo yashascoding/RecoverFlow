@@ -5,13 +5,15 @@ from datetime import datetime, timezone
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import get_settings
 from app.core.logging import get_logger
 from app.models.audit_log import AuditAction
 from app.models.payment import Payment, PaymentStatus
 from app.models.policy_decision import PolicyDecisionType, PolicyOutcome
 from app.services.audit.audit_service import AuditService
 from app.services.consent.consent_service import ConsentService
-from app.services.email.resend_service import ResendEmailService
+from app.services.email.resend_service import ResendEmailService, EmailSendResult, EmailSendErrorCategory, DEFAULT_FROM_EMAIL
+from app.services.email.template_service import EmailTemplateService
 from app.services.payments.payment_service import PaymentService
 from app.services.payments.payment_transition_service import (
     InvalidTransitionError,
@@ -22,6 +24,7 @@ from app.services.policy.policy_service import PolicyService
 from app.services.recovery.recovery_attempt_service import RecoveryAttemptService
 
 logger = get_logger(__name__)
+settings = get_settings()
 
 
 class RecoveryPipelineResult:
@@ -73,6 +76,7 @@ class RecoveryPipeline:
         self.attempt_svc = RecoveryAttemptService(db)
         self.audit_svc = AuditService(db)
         self.email_svc = ResendEmailService()
+        self.template_svc = EmailTemplateService(db)
 
     async def handle_payment_failure(
         self,
@@ -139,10 +143,37 @@ class RecoveryPipeline:
                 policy_decision_id=decision.id,
             )
 
-        # 3. Consent check
+        # 3. Consent check — hard gate before any email is sent
         has_consent = await self.consent_svc.validate_consent(
             customer_id=payment.customer_id, channel="email"
         )
+
+        if not has_consent:
+            await self.policy_svc.create(
+                decision_type="recovery_eligible",
+                outcome="denied",
+                payment_id=payment.id,
+                customer_id=payment.customer_id,
+                reason="Customer has not consented to email communication",
+                context={"failure_reason": failure_reason, "has_email_consent": False},
+                evaluated_by="consent_gate",
+            )
+            await self.audit_svc.create(
+                actor="recovery_pipeline",
+                action=AuditAction.POLICY_EVALUATED.value,
+                resource_type="payment",
+                resource_id=payment.id,
+                description="Recovery blocked: no email consent",
+                payload={"consent_check": "failed"},
+            )
+            await self.db.commit()
+            logger.info(
+                "pipeline_blocked_no_consent",
+                extra={"payment_id": str(payment.id), "customer_id": str(payment.customer_id)},
+            )
+            return RecoveryPipelineResult(
+                success=False, reason="Customer has not consented to email", payment_id=payment.id,
+            )
 
         # 4. Run deterministic policy engine
         ctx = PolicyContext(
@@ -286,38 +317,57 @@ class RecoveryPipeline:
         """Send recovery email via Resend. Returns EmailMessage or None."""
         from app.models.email_message import EmailMessage, EmailDirection, EmailStatus
 
-        try:
-            subject = f"Complete your payment — ₹{payment.amount // 100}"
+        retry_link = f"https://pay.recoverflow.in/retry/{attempt.id}"
+        template_name = "payment_failure"
+
+        rendered = await self.template_svc.render(
+            template_name,
+            {"payment_link": retry_link},
+        )
+
+        if rendered:
+            subject, body = rendered
+            template_id = (await self.template_svc.get_by_name(template_name)).id
+        else:
+            logger.warning(
+                "pipeline_email_template_fallback",
+                extra={"payment_id": str(payment.id), "template_name": template_name},
+            )
+            subject = f"Payment failed — please retry"
             body = (
-                f"Hi,\n\nYour payment of ₹{payment.amount // 100} failed.\n"
-                f"Reason: {payment.failure_reason or 'Unknown'}\n\n"
-                f"Click here to retry: https://pay.recoverflow.in/retry/{attempt.id}\n\n"
-                f"— RecoverFlow"
+                f"<h2>Payment failed.</h2>"
+                f"<p>Your payment could not be processed. No amount was deducted.</p>"
+                f"<p>You can securely retry your payment here:</p>"
+                f'<p><a href="{retry_link}" style="display:inline-block;padding:12px 28px;background:#4f46e5;color:#fff;text-decoration:none;border-radius:6px;font-weight:600;">Retry Payment</a></p>'
+                f'<p style="color:#666;font-size:13px;">— RecoverFlow</p>'
             )
+            template_id = None
 
-            result = await self.email_svc.send_email(
-                to=payment.customer_email,
-                subject=subject,
-                body=body,
-            )
+        result: EmailSendResult = await self.email_svc.send_email(
+            to=payment.customer_email,
+            subject=subject,
+            body=body,
+        )
 
+        if result.success:
             email_msg = EmailMessage(
                 customer_id=payment.customer_id,
                 direction=EmailDirection.OUTBOUND.value,
                 status=EmailStatus.SENT.value,
                 subject=subject,
                 recipient_email=payment.customer_email,
-                sender_email="payments@recoverflow.in",
-                provider_message_id=result.get("id") if result else None,
+                sender_email=settings.RECOVERY_EMAIL_FROM or DEFAULT_FROM_EMAIL,
+                template_id=template_id,
+                provider_message_id=result.provider_message_id,
                 sent_at=datetime.now(timezone.utc),
             )
             self.db.add(email_msg)
             await self.db.flush()
 
-            # Link attempt to email
             attempt.email_message_id = email_msg.id
             attempt.status = "sent"
             attempt.sent_at = datetime.now(timezone.utc)
+            attempt.recovery_link = retry_link
             await self.db.flush()
 
             logger.info(
@@ -325,18 +375,45 @@ class RecoveryPipeline:
                 extra={
                     "payment_id": str(payment.id),
                     "email_message_id": str(email_msg.id),
-                    "provider_message_id": result.get("id") if result else None,
+                    "provider_message_id": result.provider_message_id,
+                    "template_name": template_name,
                 },
             )
             return email_msg
 
-        except Exception as e:
-            logger.error(
-                "pipeline_recovery_email_failed",
-                extra={"payment_id": str(payment.id), "error": str(e)},
-            )
-            attempt.status = "failed"
-            attempt.error_message = str(e)
-            attempt.failed_at = datetime.now(timezone.utc)
-            await self.db.flush()
-            return None
+        # ── Failure path ──
+        error_category = result.error_category or EmailSendErrorCategory.UNKNOWN
+        error_detail = result.error_message or "Unknown error"
+
+        logger.error(
+            "pipeline_recovery_email_failed",
+            extra={
+                "payment_id": str(payment.id),
+                "error_category": error_category.value,
+                "error": error_detail,
+                "status_code": result.status_code,
+            },
+        )
+
+        email_msg = EmailMessage(
+            customer_id=payment.customer_id,
+            direction=EmailDirection.OUTBOUND.value,
+            status=EmailStatus.FAILED.value,
+            subject=subject,
+            recipient_email=payment.customer_email,
+            sender_email=settings.RECOVERY_EMAIL_FROM or DEFAULT_FROM_EMAIL,
+            template_id=template_id,
+            provider_message_id=result.provider_message_id,
+            error_message=f"[{error_category.value}] {error_detail}",
+            failed_at=datetime.now(timezone.utc),
+        )
+        self.db.add(email_msg)
+        await self.db.flush()
+
+        attempt.email_message_id = email_msg.id
+        attempt.status = "failed"
+        attempt.error_message = f"[{error_category.value}] {error_detail}"
+        attempt.failed_at = datetime.now(timezone.utc)
+        await self.db.flush()
+
+        return None
