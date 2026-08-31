@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 import uuid
+from datetime import datetime, timedelta, timezone
 from math import ceil
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.database import get_db
+from app.models.payment import Payment
 from app.schemas.payment import (
     PaymentCreate,
     PaymentListResponse,
@@ -50,6 +53,81 @@ async def create_payment(
     )
 
     return PaymentResponse.model_validate(payment)
+
+
+@router.get("/stats/overview")
+async def get_overview_stats(
+    db: AsyncSession = Depends(get_db),
+):
+    thirty_days_ago = datetime.now(timezone.utc) - timedelta(days=30)
+    sixty_days_ago = datetime.now(timezone.utc) - timedelta(days=60)
+
+    all_query = select(Payment)
+    current_query = select(Payment).where(Payment.created_at >= thirty_days_ago)
+    previous_query = select(Payment).where(
+        Payment.created_at >= sixty_days_ago, Payment.created_at < thirty_days_ago
+    )
+
+    all_result = await db.execute(all_query)
+    all_payments = list(all_result.scalars().all())
+
+    current_result = await db.execute(current_query)
+    current_payments = list(current_result.scalars().all())
+
+    previous_result = await db.execute(previous_query)
+    previous_payments = list(previous_result.scalars().all())
+
+    def calc_metrics(payments):
+        total_revenue = sum(p.amount for p in payments if p.status in ("captured", "recovered"))
+        failed = [p for p in payments if p.status == "failed" or p.status == "recovery_pending"]
+        recovered = [p for p in payments if p.status == "recovered"]
+        revenue_at_risk = sum(p.amount for p in failed)
+        recovered_revenue = sum(p.amount for p in recovered)
+        total = len(payments)
+        recovery_rate = round((len(recovered) / len(failed) * 100), 1) if failed else 0
+        return {
+            "total_revenue": total_revenue,
+            "revenue_at_risk": revenue_at_risk,
+            "recovered_revenue": recovered_revenue,
+            "failed_payments": len(failed),
+            "recovery_rate": recovery_rate,
+            "total_payments": total,
+        }
+
+    current = calc_metrics(current_payments)
+    previous = calc_metrics(previous_payments)
+
+    return {
+        "total_revenue": current["total_revenue"],
+        "revenue_at_risk": current["revenue_at_risk"],
+        "recovered_revenue": current["recovered_revenue"],
+        "failed_payments": current["failed_payments"],
+        "recovery_rate": current["recovery_rate"],
+        "total_payments": current["total_payments"],
+        "previous_period_revenue": previous["total_revenue"],
+        "previous_period_recovered": previous["recovered_revenue"],
+        "previous_period_failed": previous["failed_payments"],
+    }
+
+
+@router.get("/recent-activity")
+async def get_recent_activity(
+    limit: int = Query(10, ge=1, le=50),
+    db: AsyncSession = Depends(get_db),
+):
+    query = select(Payment).order_by(Payment.created_at.desc()).limit(limit)
+    result = await db.execute(query)
+    payments = result.scalars().all()
+    return [
+        {
+            "id": str(p.razorpay_order_id),
+            "customer": p.customer_email.split("@")[0],
+            "amount": p.amount,
+            "status": p.status,
+            "time": p.created_at.isoformat(),
+        }
+        for p in payments
+    ]
 
 
 @router.get("/{payment_id}", response_model=PaymentResponse)

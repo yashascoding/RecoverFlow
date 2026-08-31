@@ -49,7 +49,7 @@ export function PoliciesPage() {
           icon={<Shield className="w-8 h-8" />}
         />
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {policies?.map((policy) => {
             const isKillSwitch = policy.name === 'Kill Switch'
             const isEditing = editingId === policy.id
@@ -58,11 +58,11 @@ export function PoliciesPage() {
               <div
                 key={policy.id}
                 className={`rounded-lg border bg-card p-4 ${
-                  isKillSwitch && policy.value ? 'border-red-500/50' : 'border-border'
+                  isKillSwitch && policy.value ? 'border-red-500/30 bg-red-500/5' : 'border-border'
                 }`}
               >
                 {isKillSwitch && policy.value && (
-                  <div className="mb-3 p-2 rounded-md bg-destructive/10 border border-destructive/20 flex items-center gap-2">
+                  <div className="mb-3 p-2.5 rounded-md bg-destructive/10 border border-destructive/20 flex items-center gap-2">
                     <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
                     <span className="text-[12px] font-medium text-red-400">
                       RECOVERY AUTOMATION DISABLED — No automated recovery actions will be executed.
@@ -71,22 +71,22 @@ export function PoliciesPage() {
                 )}
 
                 <div className="flex items-start justify-between">
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       {isKillSwitch && <Shield className="w-4 h-4 text-muted-foreground" />}
-                      <h3 className="text-sm font-semibold text-foreground">{policy.name}</h3>
+                      <h3 className="text-[13px] font-semibold text-foreground">{policy.name}</h3>
                     </div>
-                    <p className="text-[13px] text-muted-foreground mt-1">{policy.description}</p>
-                    <p className="text-[11px] text-muted-foreground mt-2">
+                    <p className="text-[12px] text-muted-foreground mt-1 leading-relaxed">{policy.description}</p>
+                    <p className="text-[11px] text-muted-foreground/70 mt-2">
                       Last updated {formatDateTime(policy.last_updated)} by {policy.updated_by}
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-2 ml-4">
+                  <div className="flex items-center gap-2 ml-4 shrink-0">
                     {isEditing ? (
                       <>
                         {policy.type === 'boolean' ? (
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1.5">
                             <button
                               onClick={() => {
                                 if (isKillSwitch && editValue === 'true') {
@@ -104,7 +104,7 @@ export function PoliciesPage() {
                             </button>
                           </div>
                         ) : (
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1.5">
                             <input
                               type={policy.type === 'number' ? 'number' : 'text'}
                               value={editValue}
@@ -151,8 +151,8 @@ export function PoliciesPage() {
 
       {/* Kill Switch Confirmation Dialog */}
       {killSwitchConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="rounded-lg border border-border bg-card p-6 max-w-sm w-full mx-4 space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="rounded-lg border border-border bg-card p-6 max-w-sm w-full mx-4 space-y-4 shadow-xl">
             <div className="flex items-center gap-2">
               <AlertTriangle className="w-5 h-5 text-warning" />
               <h3 className="text-sm font-semibold text-foreground">
@@ -161,7 +161,7 @@ export function PoliciesPage() {
                   : 'Disable Recovery Automation?'}
               </h3>
             </div>
-            <p className="text-[13px] text-muted-foreground">
+            <p className="text-[13px] text-muted-foreground leading-relaxed">
               {policies?.find(p => p.name === 'Kill Switch')?.value
                 ? 'This will resume all automated recovery actions.'
                 : 'This will immediately stop all automated recovery actions. No recovery emails will be sent.'}

@@ -28,18 +28,18 @@ export function AgentRunsPage() {
     {
       key: 'id',
       header: 'Run ID',
-      render: (row) => <span className="font-mono text-[12px]">{truncateId(row.id, 10)}</span>,
+      render: (row) => <span className="font-mono text-[12px] text-muted-foreground">{truncateId(row.id, 10)}</span>,
     },
     {
       key: 'payment_order_id',
       header: 'Payment',
-      render: (row) => <span className="font-mono text-[12px]">{truncateId(row.payment_order_id, 12)}</span>,
+      render: (row) => <span className="font-mono text-[12px] text-muted-foreground">{truncateId(row.payment_order_id, 12)}</span>,
     },
     {
       key: 'customer_name',
       header: 'Customer',
       sortable: true,
-      render: (row) => <span className="font-medium">{row.customer_name}</span>,
+      render: (row) => <span className="font-medium text-[13px]">{row.customer_name}</span>,
     },
     {
       key: 'diagnosis',
@@ -68,13 +68,13 @@ export function AgentRunsPage() {
       key: 'duration_ms',
       header: 'Duration',
       sortable: true,
-      render: (row) => <span className="font-mono text-[12px]">{(row.duration_ms / 1000).toFixed(2)}s</span>,
+      render: (row) => <span className="font-mono text-[12px] text-muted-foreground">{(row.duration_ms / 1000).toFixed(2)}s</span>,
     },
     {
       key: 'created_at',
       header: 'Created',
       sortable: true,
-      render: (row) => <span className="text-muted-foreground whitespace-nowrap">{formatRelativeTime(row.created_at)}</span>,
+      render: (row) => <span className="text-muted-foreground text-[12px] whitespace-nowrap">{formatRelativeTime(row.created_at)}</span>,
     },
   ]
 
@@ -86,7 +86,7 @@ export function AgentRunsPage() {
           placeholder="Search by customer, payment, or diagnosis..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="h-8 w-72 rounded-md border border-border bg-secondary/50 px-3 text-[13px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+          className="h-8 w-72 rounded-md border border-border bg-secondary/50 px-3 text-[13px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
         />
       </div>
 

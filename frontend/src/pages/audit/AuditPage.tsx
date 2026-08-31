@@ -47,12 +47,12 @@ export function AuditPage() {
     {
       key: 'description',
       header: 'Description',
-      render: (row) => <span className="text-muted-foreground max-w-[280px] truncate block">{row.description}</span>,
+      render: (row) => <span className="text-muted-foreground text-[12px] max-w-[280px] truncate block">{row.description}</span>,
     },
     {
       key: 'policy_name',
       header: 'Policy',
-      render: (row) => row.policy_name ? <span className="font-mono text-[12px]">{row.policy_name}</span> : <span className="text-muted-foreground">—</span>,
+      render: (row) => row.policy_name ? <span className="font-mono text-[12px]">{row.policy_name}</span> : <span className="text-muted-foreground text-[12px]">—</span>,
     },
     {
       key: 'result',
@@ -75,12 +75,12 @@ export function AuditPage() {
           placeholder="Search audit events..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="h-8 w-64 rounded-md border border-border bg-secondary/50 px-3 text-[13px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+          className="h-8 w-64 rounded-md border border-border bg-secondary/50 px-3 text-[13px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
         />
         <select
           value={resultFilter}
           onChange={(e) => setResultFilter(e.target.value)}
-          className="h-8 rounded-md border border-border bg-secondary/50 px-2 text-[13px] text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+          className="h-8 rounded-md border border-border bg-secondary/50 px-2 text-[13px] text-foreground focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
         >
           <option value="all">All Results</option>
           <option value="success">Success</option>

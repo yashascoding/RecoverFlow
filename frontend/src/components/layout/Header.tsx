@@ -29,16 +29,16 @@ export function Header() {
 
   return (
     <header className="h-14 border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-30 flex items-center justify-between px-6">
-      <div className="flex items-center gap-1.5 text-sm">
+      <div className="flex items-center gap-1.5 text-[13px]">
         <Link to="/overview" className="text-muted-foreground hover:text-foreground transition-colors">
           RecoverFlow
         </Link>
-        <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
+        <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/60" />
         <span className="text-foreground font-medium">{label}</span>
       </div>
 
       <div className="flex items-center gap-3">
-        <div className="w-7 h-7 rounded-full bg-secondary flex items-center justify-center text-[11px] font-medium text-foreground">
+        <div className="w-7 h-7 rounded-full bg-recovery/15 border border-recovery/20 flex items-center justify-center text-[11px] font-semibold text-recovery">
           {initial}
         </div>
         <button

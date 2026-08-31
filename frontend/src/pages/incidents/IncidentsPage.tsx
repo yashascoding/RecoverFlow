@@ -30,23 +30,23 @@ export function IncidentsPage() {
     {
       key: 'id',
       header: 'Incident ID',
-      render: (row) => <span className="font-mono text-[12px]">{truncateId(row.id, 10)}</span>,
+      render: (row) => <span className="font-mono text-[12px] text-muted-foreground">{truncateId(row.id, 10)}</span>,
     },
     {
       key: 'payment_order_id',
       header: 'Payment',
-      render: (row) => <span className="font-mono text-[12px]">{truncateId(row.payment_order_id, 12)}</span>,
+      render: (row) => <span className="font-mono text-[12px] text-muted-foreground">{truncateId(row.payment_order_id, 12)}</span>,
     },
     {
       key: 'customer_name',
       header: 'Customer',
       sortable: true,
-      render: (row) => <span className="font-medium">{row.customer_name}</span>,
+      render: (row) => <span className="font-medium text-[13px]">{row.customer_name}</span>,
     },
     {
       key: 'failure_reason',
       header: 'Failure Reason',
-      render: (row) => <span className="text-muted-foreground max-w-[200px] truncate block">{row.failure_reason}</span>,
+      render: (row) => <span className="text-muted-foreground text-[12px] max-w-[200px] truncate block">{row.failure_reason}</span>,
     },
     {
       key: 'severity',
@@ -64,12 +64,12 @@ export function IncidentsPage() {
       key: 'created_at',
       header: 'Created',
       sortable: true,
-      render: (row) => <span className="text-muted-foreground whitespace-nowrap">{formatRelativeTime(row.created_at)}</span>,
+      render: (row) => <span className="text-muted-foreground text-[12px] whitespace-nowrap">{formatRelativeTime(row.created_at)}</span>,
     },
     {
       key: 'recovery_state',
       header: 'Recovery',
-      render: (row) => row.recovery_state ? <StatusBadge status={row.recovery_state as never} /> : <span className="text-muted-foreground">—</span>,
+      render: (row) => row.recovery_state ? <StatusBadge status={row.recovery_state as never} /> : <span className="text-muted-foreground text-[12px]">—</span>,
     },
   ]
 
@@ -81,12 +81,12 @@ export function IncidentsPage() {
           placeholder="Search incidents..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="h-8 w-64 rounded-md border border-border bg-secondary/50 px-3 text-[13px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+          className="h-8 w-64 rounded-md border border-border bg-secondary/50 px-3 text-[13px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
         />
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="h-8 rounded-md border border-border bg-secondary/50 px-2 text-[13px] text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+          className="h-8 rounded-md border border-border bg-secondary/50 px-2 text-[13px] text-foreground focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
         >
           <option value="all">All Statuses</option>
           <option value="new">New</option>

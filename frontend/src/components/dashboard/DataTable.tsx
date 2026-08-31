@@ -68,7 +68,7 @@ export function DataTable<T>({
                   key={col.key}
                   className={cn(
                     'px-4 py-2.5 text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider',
-                    col.sortable && 'cursor-pointer select-none hover:text-foreground',
+                    col.sortable && 'cursor-pointer select-none hover:text-foreground transition-colors',
                     col.className
                   )}
                   onClick={() => col.sortable && handleSort(col.key)}
@@ -86,7 +86,7 @@ export function DataTable<T>({
           <tbody className="divide-y divide-border">
             {paged.length === 0 ? (
               <tr>
-                <td colSpan={columns.length} className="px-4 py-8 text-center text-muted-foreground">
+                <td colSpan={columns.length} className="px-4 py-10 text-center text-muted-foreground">
                   {emptyMessage}
                 </td>
               </tr>
@@ -95,13 +95,13 @@ export function DataTable<T>({
                 <tr
                   key={i}
                   className={cn(
-                    'hover:bg-secondary/30 transition-colors',
+                    'hover:bg-secondary/40 transition-colors',
                     onRowClick && 'cursor-pointer'
                   )}
                   onClick={() => onRowClick?.(row)}
                 >
                   {columns.map((col) => (
-                    <td key={col.key} className={cn('px-4 py-2.5 text-foreground', col.className)}>
+                    <td key={col.key} className={cn('px-4 py-3 text-foreground', col.className)}>
                       {col.render ? col.render(row) : String((row as Record<string, unknown>)[col.key] ?? '')}
                     </td>
                   ))}
@@ -112,15 +112,15 @@ export function DataTable<T>({
         </table>
       </div>
       {totalPages > 1 && (
-        <div className="flex items-center justify-between px-4 py-2 border-t border-border">
-          <span className="text-[11px] text-muted-foreground">
+        <div className="flex items-center justify-between px-4 py-2.5 border-t border-border">
+          <span className="text-[12px] text-muted-foreground">
             Showing {page * pageSize + 1}–{Math.min((page + 1) * pageSize, sorted.length)} of {sorted.length}
           </span>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5">
             <button
               onClick={() => setPage(Math.max(0, page - 1))}
               disabled={page === 0}
-              className="p-1 rounded hover:bg-secondary disabled:opacity-30 transition-colors"
+              className="p-1.5 rounded-md hover:bg-secondary disabled:opacity-30 transition-colors"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
@@ -129,7 +129,7 @@ export function DataTable<T>({
                 key={i}
                 onClick={() => setPage(i)}
                 className={cn(
-                  'w-7 h-7 rounded text-[12px] font-medium transition-colors',
+                  'w-7 h-7 rounded-md text-[12px] font-medium transition-colors',
                   i === page ? 'bg-secondary text-foreground' : 'text-muted-foreground hover:bg-secondary/50'
                 )}
               >
@@ -139,7 +139,7 @@ export function DataTable<T>({
             <button
               onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
               disabled={page >= totalPages - 1}
-              className="p-1 rounded hover:bg-secondary disabled:opacity-30 transition-colors"
+              className="p-1.5 rounded-md hover:bg-secondary disabled:opacity-30 transition-colors"
             >
               <ChevronRight className="w-4 h-4" />
             </button>

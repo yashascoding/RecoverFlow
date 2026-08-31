@@ -10,12 +10,12 @@ interface ErrorStateProps {
 
 export function ErrorState({ title = 'Something went wrong', message, onRetry, className }: ErrorStateProps) {
   return (
-    <div className={cn('flex flex-col items-center justify-center py-12 text-center', className)}>
+    <div className={cn('flex flex-col items-center justify-center py-10 text-center', className)}>
       <div className="mb-3 p-2 rounded-full bg-destructive/10">
         <AlertTriangle className="w-5 h-5 text-red-400" />
       </div>
-      <h3 className="text-sm font-medium text-foreground">{title}</h3>
-      <p className="text-[13px] text-muted-foreground mt-1 max-w-sm">{message}</p>
+      <h3 className="text-[13px] font-medium text-foreground">{title}</h3>
+      <p className="text-[12px] text-muted-foreground mt-1 max-w-sm">{message}</p>
       {onRetry && (
         <button
           onClick={onRetry}

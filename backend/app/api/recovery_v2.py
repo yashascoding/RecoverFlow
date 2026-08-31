@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 import uuid
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.database import get_db
+from app.models.payment import Payment
 from app.schemas.customer import CustomerResponse
 from app.schemas.payment import PaymentResponse
 from app.services.recovery.failure_diagnosis import FailureDiagnosisEngine
@@ -179,3 +182,38 @@ async def create_payment_link(
             status_code=409, detail="Recovery link already exists for this payment"
         )
     return PaymentLinkResponse(**link)
+
+
+# ── Incidents ────────────────────────────────────────────────────────────
+@router.get("/incidents")
+async def list_incidents(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    db: AsyncSession = Depends(get_db),
+):
+    query = (
+        select(Payment)
+        .where(Payment.status.in_(["failed", "recovery_pending"]))
+        .order_by(Payment.created_at.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+    )
+    result = await db.execute(query)
+    payments = result.scalars().all()
+    return [
+        {
+            "id": str(p.id),
+            "payment_id": str(p.id),
+            "payment_order_id": p.razorpay_order_id,
+            "customer_name": p.customer_email.split("@")[0],
+            "customer_email": p.customer_email,
+            "amount": p.amount,
+            "failure_reason": p.failure_reason or "Unknown failure",
+            "severity": "high" if p.amount >= 10000 else "medium" if p.amount >= 1000 else "low",
+            "status": "new" if p.status == "failed" else "investigating",
+            "recovery_state": p.status,
+            "created_at": p.created_at.isoformat(),
+            "updated_at": p.updated_at.isoformat(),
+        }
+        for p in payments
+    ]

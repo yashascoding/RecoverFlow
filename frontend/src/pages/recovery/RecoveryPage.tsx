@@ -25,35 +25,35 @@ export function RecoveryPage() {
     {
       key: 'payment_order_id',
       header: 'Payment',
-      render: (row) => <span className="font-mono text-[12px]">{truncateId(row.payment_order_id, 12)}</span>,
+      render: (row) => <span className="font-mono text-[12px] text-muted-foreground">{truncateId(row.payment_order_id, 12)}</span>,
     },
     {
       key: 'customer_name',
       header: 'Customer',
       sortable: true,
-      render: (row) => <span className="font-medium">{row.customer_name}</span>,
+      render: (row) => <span className="font-medium text-[13px]">{row.customer_name}</span>,
     },
     {
       key: 'original_amount',
       header: 'Original Amount',
       sortable: true,
-      render: (row) => <span className="font-mono">{formatCurrency(row.original_amount)}</span>,
+      render: (row) => <span className="font-mono text-[13px]">{formatCurrency(row.original_amount)}</span>,
     },
     {
       key: 'recovery_amount',
       header: 'Recovered',
       sortable: true,
-      render: (row) => row.recovery_amount ? <span className="font-mono text-success">{formatCurrency(row.recovery_amount)}</span> : <span className="text-muted-foreground">—</span>,
+      render: (row) => row.recovery_amount ? <span className="font-mono text-[13px] text-success">{formatCurrency(row.recovery_amount)}</span> : <span className="text-muted-foreground text-[12px]">—</span>,
     },
     {
       key: 'recovery_time',
       header: 'Recovery Time',
-      render: (row) => row.recovery_time ? <span className="text-foreground">{row.recovery_time}</span> : <span className="text-muted-foreground">—</span>,
+      render: (row) => row.recovery_time ? <span className="text-[13px]">{row.recovery_time}</span> : <span className="text-muted-foreground text-[12px]">—</span>,
     },
     {
       key: 'channel',
       header: 'Channel',
-      render: (row) => <span className="capitalize">{row.channel}</span>,
+      render: (row) => <span className="capitalize text-[13px]">{row.channel}</span>,
     },
     {
       key: 'status',
@@ -65,7 +65,7 @@ export function RecoveryPage() {
       key: 'created_at',
       header: 'Created',
       sortable: true,
-      render: (row) => <span className="text-muted-foreground whitespace-nowrap">{formatRelativeTime(row.created_at)}</span>,
+      render: (row) => <span className="text-muted-foreground text-[12px] whitespace-nowrap">{formatRelativeTime(row.created_at)}</span>,
     },
   ]
 

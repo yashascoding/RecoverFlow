@@ -1,7 +1,7 @@
 import { CreditCard, DollarSign, TrendingUp, AlertTriangle, RotateCcw, Eye, Brain, Shield, Mail, CheckCircle2, Zap } from 'lucide-react'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { MetricCard } from '@/components/dashboard/MetricCard'
-import { MetricCardSkeleton, ChartSkeleton } from '@/components/dashboard/LoadingState'
+import { MetricCardSkeleton } from '@/components/dashboard/LoadingState'
 import { EmptyState } from '@/components/dashboard/EmptyState'
 import { StatusBadge } from '@/components/dashboard/StatusBadge'
 import { useApi } from '@/hooks/useApi'
@@ -65,9 +65,9 @@ export function OverviewPage() {
   return (
     <PageContainer title="Overview" description="Merchant dashboard — payment recovery overview">
       {/* Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {metricsLoading ? (
-          Array.from({ length: 5 }).map((_, i) => <MetricCardSkeleton key={i} />)
+          Array.from({ length: 4 }).map((_, i) => <MetricCardSkeleton key={i} />)
         ) : hasData ? (
           <>
             <MetricCard
@@ -91,91 +91,25 @@ export function OverviewPage() {
               icon={<RotateCcw className="w-4 h-4" />}
             />
             <MetricCard
-              title="Failed Payments"
-              value={String(metrics.failed_payments)}
-              change={metrics.previous_period_failed > 0 ? ((metrics.failed_payments - metrics.previous_period_failed) / metrics.previous_period_failed) * -100 : undefined}
-              changeLabel="vs previous period"
-              icon={<CreditCard className="w-4 h-4" />}
-            />
-            <MetricCard
               title="Recovery Rate"
               value={`${metrics.recovery_rate}%`}
+              description={`${metrics.failed_payments} failed payments`}
               icon={<TrendingUp className="w-4 h-4" />}
             />
           </>
         ) : (
-          Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="rounded-lg border border-border bg-card p-4 flex flex-col items-center justify-center h-[104px]">
+          Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="rounded-lg border border-border bg-card p-4 flex flex-col items-center justify-center h-[100px]">
               <p className="text-[11px] text-muted-foreground">No data yet</p>
             </div>
           ))
         )}
       </div>
 
-      {/* Charts + Activity */}
+      {/* Activity + How It Works (when no data) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
-          {metricsLoading ? (
-            Array.from({ length: 4 }).map((_, i) => <ChartSkeleton key={i} />)
-          ) : hasData ? (
-            <>
-              <div className="rounded-lg border border-border bg-card p-4">
-                <p className="text-[12px] font-medium text-muted-foreground uppercase tracking-wider mb-3">Recovery Rate</p>
-                <div className="h-40 flex items-center justify-center">
-                  <p className="text-[12px] text-muted-foreground">Chart data available with more payments</p>
-                </div>
-              </div>
-              <div className="rounded-lg border border-border bg-card p-4">
-                <p className="text-[12px] font-medium text-muted-foreground uppercase tracking-wider mb-3">Failed Payments</p>
-                <div className="h-40 flex items-center justify-center">
-                  <p className="text-[12px] text-muted-foreground">Chart data available with more payments</p>
-                </div>
-              </div>
-              <div className="rounded-lg border border-border bg-card p-4">
-                <p className="text-[12px] font-medium text-muted-foreground uppercase tracking-wider mb-3">Recovered Revenue</p>
-                <div className="h-40 flex items-center justify-center">
-                  <p className="text-[12px] text-muted-foreground">Chart data available with more payments</p>
-                </div>
-              </div>
-              <div className="rounded-lg border border-border bg-card p-4">
-                <p className="text-[12px] font-medium text-muted-foreground uppercase tracking-wider mb-3">Revenue At Risk</p>
-                <div className="h-40 flex items-center justify-center">
-                  <p className="text-[12px] text-muted-foreground">Chart data available with more payments</p>
-                </div>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="rounded-lg border border-border bg-card p-4 flex items-center justify-center h-44">
-                <EmptyState
-                  title="No recovery data"
-                  description="Charts will appear once payments are processed"
-                />
-              </div>
-              <div className="rounded-lg border border-border bg-card p-4 flex items-center justify-center h-44">
-                <EmptyState
-                  title="No failure data"
-                  description="Failed payment charts will appear here"
-                />
-              </div>
-              <div className="rounded-lg border border-border bg-card p-4 flex items-center justify-center h-44">
-                <EmptyState
-                  title="No recovery data"
-                  description="Revenue recovery charts will appear here"
-                />
-              </div>
-              <div className="rounded-lg border border-border bg-card p-4 flex items-center justify-center h-44">
-                <EmptyState
-                  title="No risk data"
-                  description="Revenue at risk charts will appear here"
-                />
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* Recent Activity */}
-        <div className="rounded-lg border border-border bg-card">
+        {/* Recent Activity — wider */}
+        <div className="lg:col-span-2 rounded-lg border border-border bg-card">
           <div className="px-4 py-3 border-b border-border">
             <p className="text-[12px] font-medium text-muted-foreground uppercase tracking-wider">Recent Activity</p>
           </div>
@@ -188,7 +122,7 @@ export function OverviewPage() {
                 </div>
               ))
             ) : activity && activity.length > 0 ? (
-              activity.map((item) => (
+              activity.slice(0, 6).map((item) => (
                 <div key={item.id} className="px-4 py-3 flex items-center justify-between">
                   <div className="min-w-0">
                     <p className="text-[13px] text-foreground font-medium truncate">{item.customer}</p>
@@ -210,45 +144,47 @@ export function OverviewPage() {
             )}
           </div>
         </div>
+
+        {/* System Health — right column */}
+        <div className="rounded-lg border border-border bg-card">
+          <div className="px-4 py-3 border-b border-border">
+            <div className="flex items-center gap-2">
+              <div className={`w-2 h-2 rounded-full ${health && health.length > 0 ? 'bg-success' : 'bg-muted-foreground'}`} />
+              <p className="text-[12px] font-medium text-muted-foreground uppercase tracking-wider">System Health</p>
+            </div>
+          </div>
+          <div className="divide-y divide-border">
+            {healthLoading ? (
+              Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="px-4 py-3 space-y-2">
+                  <div className="h-3 w-24 bg-secondary animate-pulse rounded" />
+                  <div className="h-3 w-16 bg-secondary animate-pulse rounded" />
+                </div>
+              ))
+            ) : health && health.length > 0 ? (
+              health.map((svc) => (
+                <div key={svc.name} className="px-4 py-3 flex items-center justify-between">
+                  <div>
+                    <p className="text-[13px] text-foreground font-medium">{svc.name}</p>
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <div className="w-1.5 h-1.5 rounded-full bg-success" />
+                      <span className="text-[11px] text-success capitalize">{svc.status}</span>
+                    </div>
+                  </div>
+                  <span className="text-[11px] text-muted-foreground font-mono">{svc.latency_ms}ms</span>
+                </div>
+              ))
+            ) : (
+              <div className="px-4 py-6">
+                <p className="text-[12px] text-muted-foreground text-center">System health status unavailable</p>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* How It Works Block - only when no data */}
       {!metricsLoading && !hasData && <HowItWorksBlock />}
-
-      {/* System Health */}
-      <div className="rounded-lg border border-border bg-card">
-        <div className="px-4 py-3 border-b border-border">
-          <div className="flex items-center gap-2">
-            <div className={`w-2 h-2 rounded-full ${health && health.length > 0 ? 'bg-success' : 'bg-muted-foreground'}`} />
-            <p className="text-[12px] font-medium text-muted-foreground uppercase tracking-wider">System Health</p>
-          </div>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-border">
-          {healthLoading ? (
-            Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="px-4 py-3 space-y-2">
-                <div className="h-3 w-24 bg-secondary animate-pulse rounded" />
-                <div className="h-3 w-16 bg-secondary animate-pulse rounded" />
-              </div>
-            ))
-          ) : health && health.length > 0 ? (
-            health.map((svc) => (
-              <div key={svc.name} className="px-4 py-3">
-                <p className="text-[13px] text-foreground font-medium">{svc.name}</p>
-                <div className="flex items-center gap-1.5 mt-1">
-                  <div className="w-1.5 h-1.5 rounded-full bg-success" />
-                  <span className="text-[11px] text-success capitalize">{svc.status}</span>
-                  <span className="text-[10px] text-muted-foreground ml-auto">{svc.latency_ms}ms</span>
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="col-span-full px-4 py-4">
-              <p className="text-[12px] text-muted-foreground text-center">System health status unavailable</p>
-            </div>
-          )}
-        </div>
-      </div>
     </PageContainer>
   )
 }

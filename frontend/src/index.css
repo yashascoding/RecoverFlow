@@ -3,23 +3,23 @@
 @theme {
   --color-background: #09090b;
   --color-foreground: #fafafa;
-  --color-card: #09090b;
+  --color-card: #0c0c0e;
   --color-card-foreground: #fafafa;
-  --color-popover: #09090b;
+  --color-popover: #0c0c0e;
   --color-popover-foreground: #fafafa;
   --color-primary: #fafafa;
   --color-primary-foreground: #18181b;
-  --color-secondary: #27272a;
+  --color-secondary: #1c1c1f;
   --color-secondary-foreground: #fafafa;
   --color-muted: #27272a;
   --color-muted-foreground: #a1a1aa;
-  --color-accent: #27272a;
+  --color-accent: #1c1c1f;
   --color-accent-foreground: #fafafa;
   --color-destructive: #7f1d1d;
   --color-destructive-foreground: #fafafa;
   --color-border: #27272a;
-  --color-input: #27272a;
-  --color-ring: #d4d4d8;
+  --color-input: #1c1c1f;
+  --color-ring: #3f3f46;
   --color-success: #059669;
   --color-success-foreground: #fafafa;
   --color-warning: #d97706;
@@ -41,12 +41,24 @@
 body {
   background-color: var(--color-background);
   color: var(--color-foreground);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
 }
 
-/* Custom scrollbar */
+::selection {
+  background-color: rgba(59, 130, 246, 0.3);
+  color: #fafafa;
+}
+
+input:focus-visible,
+select:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--color-ring);
+  outline-offset: 1px;
+}
+
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;

@@ -37,7 +37,7 @@ export function AuthPage() {
   return (
     <div className="min-h-screen bg-background flex">
       {/* Left: Branding */}
-      <div className="hidden lg:flex flex-1 bg-[#0c0c0e] border-r border-border flex-col justify-between p-12 relative overflow-hidden">
+      <div className="hidden lg:flex flex-1 bg-card border-r border-border flex-col justify-between p-12 relative overflow-hidden">
         <div className="relative z-10">
           <Link to="/" className="flex items-center gap-2 mb-16">
             <div className="w-8 h-8 rounded-md bg-recovery flex items-center justify-center text-white text-sm font-bold">RF</div>
@@ -119,37 +119,37 @@ export function AuthPage() {
           <form onSubmit={handleSubmit} className="mt-8 space-y-4">
             {mode === 'register' && (
               <div>
-                <label className="text-[12px] font-medium text-muted-foreground uppercase tracking-wider">Name</label>
+                <label className="text-[12px] font-medium text-muted-foreground">Name</label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
-                  className="mt-1.5 h-10 w-full rounded-md border border-border bg-secondary/50 px-3 text-[13px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                  className="mt-1.5 h-10 w-full rounded-md border border-border bg-secondary/50 px-3 text-[13px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
                   placeholder="Your name"
                 />
               </div>
             )}
             <div>
-              <label className="text-[12px] font-medium text-muted-foreground uppercase tracking-wider">Email</label>
+              <label className="text-[12px] font-medium text-muted-foreground">Email</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="mt-1.5 h-10 w-full rounded-md border border-border bg-secondary/50 px-3 text-[13px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                className="mt-1.5 h-10 w-full rounded-md border border-border bg-secondary/50 px-3 text-[13px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
                 placeholder="merchant@example.com"
               />
             </div>
             <div>
-              <label className="text-[12px] font-medium text-muted-foreground uppercase tracking-wider">Password</label>
+              <label className="text-[12px] font-medium text-muted-foreground">Password</label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={6}
-                className="mt-1.5 h-10 w-full rounded-md border border-border bg-secondary/50 px-3 text-[13px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                className="mt-1.5 h-10 w-full rounded-md border border-border bg-secondary/50 px-3 text-[13px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
                 placeholder="At least 6 characters"
               />
             </div>

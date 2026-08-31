@@ -34,6 +34,17 @@ export async function getRecentActivity(): Promise<ActivityItem[]> {
   return api.get<ActivityItem[]>('/api/payments/recent-activity')
 }
 
+interface HealthResponse {
+  status: string
+  postgres: string
+  redis: string
+  timestamp: string
+}
+
 export async function getSystemHealth(): Promise<HealthService[]> {
-  return api.get<HealthService[]>('/api/health')
+  const res = await api.get<HealthResponse>('/api/health')
+  return [
+    { name: 'PostgreSQL', status: res.postgres, latency_ms: 0 },
+    { name: 'Redis', status: res.redis, latency_ms: 0 },
+  ]
 }

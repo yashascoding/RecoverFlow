@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils'
 
 function Skeleton({ className }: { className?: string }) {
-  return <div className={cn('animate-pulse rounded-md bg-secondary', className)} />
+  return <div className={cn('animate-pulse rounded-md bg-secondary/70', className)} />
 }
 
 export function MetricCardSkeleton() {
@@ -29,9 +29,9 @@ export function TableSkeleton({ rows = 5, columns = 6 }: { rows?: number; column
       </div>
       <div className="divide-y divide-border">
         {Array.from({ length: rows }).map((_, i) => (
-          <div key={i} className="flex items-center gap-4 p-4">
+          <div key={i} className="flex items-center gap-4 px-4 py-3">
             {Array.from({ length: columns }).map((_, j) => (
-              <Skeleton key={j} className="h-4 flex-1" />
+              <Skeleton key={j} className="h-3.5 flex-1" />
             ))}
           </div>
         ))}
@@ -43,18 +43,18 @@ export function TableSkeleton({ rows = 5, columns = 6 }: { rows?: number; column
 export function ChartSkeleton() {
   return (
     <div className="rounded-lg border border-border bg-card p-4">
-      <Skeleton className="h-4 w-24 mb-4" />
-      <Skeleton className="h-48 w-full rounded-md" />
+      <Skeleton className="h-3.5 w-24 mb-4" />
+      <Skeleton className="h-44 w-full rounded-md" />
     </div>
   )
 }
 
 export function PageSkeleton() {
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 max-w-[1400px] space-y-6">
       <div>
-        <Skeleton className="h-6 w-32 mb-1" />
-        <Skeleton className="h-4 w-64" />
+        <Skeleton className="h-5 w-32 mb-1" />
+        <Skeleton className="h-3.5 w-64" />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {Array.from({ length: 4 }).map((_, i) => (

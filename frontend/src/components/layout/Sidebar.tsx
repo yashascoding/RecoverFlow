@@ -23,17 +23,17 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        'fixed left-0 top-0 z-40 h-screen border-r border-border bg-[#0c0c0e] flex flex-col transition-all duration-200',
+        'fixed left-0 top-0 z-40 h-screen border-r border-border bg-card flex flex-col transition-all duration-200',
         collapsed ? 'w-[60px]' : 'w-[220px]'
       )}
     >
       {/* Logo */}
-      <div className="flex items-center gap-2 px-4 h-14 border-b border-border shrink-0">
-        <div className="w-7 h-7 rounded-md bg-recovery flex items-center justify-center text-white text-xs font-bold shrink-0">
+      <div className="flex items-center gap-2.5 px-4 h-14 border-b border-border shrink-0">
+        <div className="w-7 h-7 rounded-md bg-recovery flex items-center justify-center text-white text-[11px] font-bold shrink-0">
           RF
         </div>
         {!collapsed && (
-          <span className="text-sm font-semibold text-foreground tracking-tight">
+          <span className="text-[13px] font-semibold text-foreground tracking-tight">
             RecoverFlow
           </span>
         )}
@@ -49,13 +49,13 @@ export function Sidebar() {
               key={item.to}
               to={item.to}
               className={cn(
-                'flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-[13px] font-medium transition-colors',
+                'flex items-center gap-2.5 px-2.5 py-[7px] rounded-md text-[13px] font-medium transition-all duration-150',
                 isActive
-                  ? 'bg-secondary text-foreground'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-secondary/50'
+                  ? 'bg-recovery/10 text-recovery'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-secondary/60'
               )}
             >
-              <Icon className="w-4 h-4 shrink-0" />
+              <Icon className={cn('w-4 h-4 shrink-0', isActive && 'text-recovery')} />
               {!collapsed && <span>{item.label}</span>}
             </NavLink>
           )
@@ -64,15 +64,18 @@ export function Sidebar() {
 
       {/* Bottom */}
       <div className="border-t border-border p-2 space-y-1 shrink-0">
-        <div className="flex items-center gap-2 px-2.5 py-1.5">
-          <Activity className="w-3.5 h-3.5 text-success" />
+        <div className={cn(
+          'flex items-center gap-2 px-2.5 py-1.5 rounded-md',
+          collapsed ? 'justify-center' : ''
+        )}>
+          <div className="w-2 h-2 rounded-full bg-success shrink-0" />
           {!collapsed && (
-            <span className="text-[11px] text-muted-foreground">System Healthy</span>
+            <span className="text-[12px] text-success font-medium">System Healthy</span>
           )}
         </div>
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="flex items-center gap-2 px-2.5 py-1.5 w-full rounded-md text-[13px] text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors"
+          className="flex items-center gap-2 px-2.5 py-1.5 w-full rounded-md text-[13px] text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors"
         >
           {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
           {!collapsed && <span>Collapse</span>}
