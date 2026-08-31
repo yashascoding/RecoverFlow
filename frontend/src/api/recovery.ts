@@ -1,15 +1,14 @@
-import { incidents } from '@/mocks/incidents'
-import { recoveryAttempts } from '@/mocks/recovery'
+import { api } from './client'
 import type { Incident, RecoveryAttempt } from '@/types'
 
 export async function getIncidents(): Promise<Incident[]> {
-  return incidents
+  return api.get<Incident[]>('/api/recovery/v2/incidents')
 }
 
-export async function getIncident(id: string): Promise<Incident | undefined> {
-  return incidents.find(i => i.id === id)
+export async function getIncident(id: string): Promise<Incident> {
+  return api.get<Incident>(`/api/recovery/v2/incidents/${id}`)
 }
 
 export async function getRecoveryAttempts(): Promise<RecoveryAttempt[]> {
-  return recoveryAttempts
+  return api.get<RecoveryAttempt[]>('/api/recovery-attempts/')
 }

@@ -4,6 +4,7 @@ import { useApi } from '@/hooks/useApi'
 import { getPolicies } from '@/api/policies'
 import { TableSkeleton } from '@/components/dashboard/LoadingState'
 import { ErrorState } from '@/components/dashboard/ErrorState'
+import { EmptyState } from '@/components/dashboard/EmptyState'
 import { formatDateTime, formatCurrency } from '@/lib/utils'
 import { Shield, AlertTriangle, Pencil, Check, X } from 'lucide-react'
 import { toast } from 'sonner'
@@ -19,7 +20,7 @@ export function PoliciesPage() {
     setEditValue(String(currentValue))
   }
 
-  const handleSave = (id: string) => {
+  const handleSave = (_id: string) => {
     toast.success('Policy updated successfully')
     setEditingId(null)
   }
@@ -41,6 +42,12 @@ export function PoliciesPage() {
         <TableSkeleton rows={5} columns={4} />
       ) : error ? (
         <ErrorState message={error} onRetry={refetch} />
+      ) : (policies?.length ?? 0) === 0 ? (
+        <EmptyState
+          title="No policies configured"
+          description="Recovery policies will appear here once configured"
+          icon={<Shield className="w-8 h-8" />}
+        />
       ) : (
         <div className="space-y-3">
           {policies?.map((policy) => {

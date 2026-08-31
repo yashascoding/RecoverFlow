@@ -4,11 +4,13 @@ import { DataTable, type Column } from '@/components/dashboard/DataTable'
 import { StatusBadge } from '@/components/dashboard/StatusBadge'
 import { TableSkeleton } from '@/components/dashboard/LoadingState'
 import { ErrorState } from '@/components/dashboard/ErrorState'
+import { EmptyState } from '@/components/dashboard/EmptyState'
 import { useApi } from '@/hooks/useApi'
 import { getPayments } from '@/api/payments'
 import { formatCurrency, formatDateTime, truncateId } from '@/lib/utils'
 import type { Payment } from '@/types'
 import { useState } from 'react'
+import { CreditCard } from 'lucide-react'
 
 export function PaymentsPage() {
   const navigate = useNavigate()
@@ -112,6 +114,12 @@ export function PaymentsPage() {
         <TableSkeleton rows={8} columns={7} />
       ) : error ? (
         <ErrorState message={error} onRetry={refetch} />
+      ) : filtered.length === 0 ? (
+        <EmptyState
+          title="No payments yet"
+          description="Payments will appear here once Razorpay webhooks are received"
+          icon={<CreditCard className="w-8 h-8" />}
+        />
       ) : (
         <DataTable
           columns={columns}

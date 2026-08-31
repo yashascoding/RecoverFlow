@@ -1,15 +1,10 @@
-import { policies } from '@/mocks/policies'
+import { api } from './client'
 import type { Policy } from '@/types'
 
 export async function getPolicies(): Promise<Policy[]> {
-  return policies
+  return api.get<Policy[]>('/api/policies/')
 }
 
 export async function updatePolicy(id: string, value: string | number | boolean): Promise<Policy> {
-  const policy = policies.find(p => p.id === id)
-  if (!policy) throw new Error('Policy not found')
-  policy.value = value
-  policy.last_updated = new Date().toISOString()
-  policy.updated_by = 'Merchant'
-  return policy
+  return api.patch<Policy>(`/api/policies/${id}`, { value })
 }

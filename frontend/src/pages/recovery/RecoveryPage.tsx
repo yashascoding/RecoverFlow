@@ -4,6 +4,7 @@ import { DataTable, type Column } from '@/components/dashboard/DataTable'
 import { StatusBadge } from '@/components/dashboard/StatusBadge'
 import { MetricCardSkeleton, TableSkeleton } from '@/components/dashboard/LoadingState'
 import { ErrorState } from '@/components/dashboard/ErrorState'
+import { EmptyState } from '@/components/dashboard/EmptyState'
 import { useApi } from '@/hooks/useApi'
 import { getRecoveryAttempts } from '@/api/recovery'
 import { formatCurrency, formatRelativeTime, truncateId } from '@/lib/utils'
@@ -89,6 +90,12 @@ export function RecoveryPage() {
         <TableSkeleton rows={8} columns={8} />
       ) : error ? (
         <ErrorState message={error} onRetry={refetch} />
+      ) : (attempts?.length ?? 0) === 0 ? (
+        <EmptyState
+          title="No recovery attempts yet"
+          description="Recovery attempts will appear here when failed payments are processed"
+          icon={<RotateCcw className="w-8 h-8" />}
+        />
       ) : (
         <DataTable
           columns={columns}

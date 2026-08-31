@@ -61,10 +61,10 @@ function LandingNavbar() {
           ))}
         </div>
         <button
-          onClick={() => navigate('/overview')}
+          onClick={() => navigate('/login')}
           className="px-4 py-1.5 rounded-md bg-white text-black text-[13px] font-medium hover:bg-white/90 transition-colors"
         >
-          Launch Dashboard
+          Get Started
         </button>
       </div>
     </nav>
@@ -174,10 +174,10 @@ function Hero() {
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <button
-                onClick={() => navigate('/overview')}
+                onClick={() => navigate('/login')}
                 className="px-6 py-3 rounded-md bg-white text-black text-sm font-semibold hover:bg-white/90 transition-colors inline-flex items-center gap-2"
               >
-                Launch RecoverFlow
+                Get Started
                 <ArrowRight className="w-4 h-4" />
               </button>
               <button
@@ -709,10 +709,10 @@ function FinalCTA() {
         </p>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           <button
-            onClick={() => navigate('/overview')}
+            onClick={() => navigate('/login')}
             className="px-7 py-3 rounded-md bg-white text-black text-sm font-semibold hover:bg-white/90 transition-colors inline-flex items-center gap-2"
           >
-            Launch RecoverFlow
+            Get Started
             <ArrowRight className="w-4 h-4" />
           </button>
           <button

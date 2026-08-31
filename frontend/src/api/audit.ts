@@ -1,6 +1,6 @@
-import { auditEvents } from '@/mocks/audit'
+import { api } from './client'
 import type { AuditEvent } from '@/types'
 
 export async function getAuditEvents(): Promise<AuditEvent[]> {
-  return auditEvents
+  return api.get<AuditEvent[]>('/api/audit/')
 }

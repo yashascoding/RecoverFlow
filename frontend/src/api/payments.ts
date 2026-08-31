@@ -1,10 +1,10 @@
-import { payments, getPaymentById } from '@/mocks/payments'
+import { api } from './client'
 import type { Payment } from '@/types'
 
 export async function getPayments(): Promise<Payment[]> {
-  return payments
+  return api.get<Payment[]>('/api/payments/')
 }
 
-export async function getPayment(id: string): Promise<Payment | undefined> {
-  return getPaymentById(id)
+export async function getPayment(id: string): Promise<Payment> {
+  return api.get<Payment>(`/api/payments/${id}`)
 }

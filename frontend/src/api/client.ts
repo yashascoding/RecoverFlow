@@ -1,10 +1,22 @@
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
+function getToken(): string | null {
+  return localStorage.getItem('rf_token')
+}
+
 class ApiClient {
   private async request<T>(path: string, options?: RequestInit): Promise<T> {
+    const token = getToken()
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...((options?.headers as Record<string, string>) || {}),
+    }
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`
+    }
     const res = await fetch(`${API_BASE}${path}`, {
-      headers: { 'Content-Type': 'application/json', ...options?.headers },
       ...options,
+      headers,
     })
     if (!res.ok) {
       const error = await res.json().catch(() => ({ detail: res.statusText }))

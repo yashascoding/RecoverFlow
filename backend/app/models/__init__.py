@@ -10,6 +10,7 @@ from app.models.agent_action import AgentAction, AgentActionStatus, AgentActionT
 from app.models.policy_decision import PolicyDecision, PolicyDecisionType, PolicyOutcome
 from app.models.audit_log import AuditLog, AuditAction
 from app.models.recovery_attempt import RecoveryAttempt, RecoveryAttemptStatus, RecoveryChannel
+from app.models.user import User
 
 __all__ = [
     "Customer",
@@ -41,4 +42,5 @@ __all__ = [
     "RecoveryAttempt",
     "RecoveryAttemptStatus",
     "RecoveryChannel",
+    "User",
 ]

@@ -4,11 +4,13 @@ import { DataTable, type Column } from '@/components/dashboard/DataTable'
 import { StatusBadge } from '@/components/dashboard/StatusBadge'
 import { TableSkeleton } from '@/components/dashboard/LoadingState'
 import { ErrorState } from '@/components/dashboard/ErrorState'
+import { EmptyState } from '@/components/dashboard/EmptyState'
 import { useApi } from '@/hooks/useApi'
 import { getAgentRuns } from '@/api/agentRuns'
 import { formatRelativeTime, truncateId } from '@/lib/utils'
 import type { AgentRun } from '@/types'
 import { useState } from 'react'
+import { Bot } from 'lucide-react'
 
 export function AgentRunsPage() {
   const navigate = useNavigate()
@@ -92,6 +94,12 @@ export function AgentRunsPage() {
         <TableSkeleton rows={8} columns={8} />
       ) : error ? (
         <ErrorState message={error} onRetry={refetch} />
+      ) : filtered.length === 0 ? (
+        <EmptyState
+          title="No agent runs yet"
+          description="AI agent execution traces will appear here when failures are investigated"
+          icon={<Bot className="w-8 h-8" />}
+        />
       ) : (
         <DataTable
           columns={columns}

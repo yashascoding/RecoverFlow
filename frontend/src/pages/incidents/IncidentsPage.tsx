@@ -4,11 +4,13 @@ import { DataTable, type Column } from '@/components/dashboard/DataTable'
 import { StatusBadge } from '@/components/dashboard/StatusBadge'
 import { TableSkeleton } from '@/components/dashboard/LoadingState'
 import { ErrorState } from '@/components/dashboard/ErrorState'
+import { EmptyState } from '@/components/dashboard/EmptyState'
 import { useApi } from '@/hooks/useApi'
 import { getIncidents } from '@/api/recovery'
-import { formatCurrency, formatRelativeTime, truncateId } from '@/lib/utils'
+import { formatRelativeTime, truncateId } from '@/lib/utils'
 import type { Incident } from '@/types'
 import { useState } from 'react'
+import { AlertTriangle } from 'lucide-react'
 
 export function IncidentsPage() {
   const navigate = useNavigate()
@@ -99,6 +101,12 @@ export function IncidentsPage() {
         <TableSkeleton rows={8} columns={8} />
       ) : error ? (
         <ErrorState message={error} onRetry={refetch} />
+      ) : filtered.length === 0 ? (
+        <EmptyState
+          title="No incidents yet"
+          description="Incidents will be created when payment failures are detected"
+          icon={<AlertTriangle className="w-8 h-8" />}
+        />
       ) : (
         <DataTable
           columns={columns}

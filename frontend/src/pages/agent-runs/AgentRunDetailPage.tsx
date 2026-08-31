@@ -1,21 +1,9 @@
 import { useParams, Link } from 'react-router-dom'
 import { ArrowLeft, CheckCircle, XCircle, Clock } from 'lucide-react'
 import { PageContainer } from '@/components/layout/PageContainer'
-import { StatusBadge } from '@/components/dashboard/StatusBadge'
 import { useApi } from '@/hooks/useApi'
 import { getAgentRun } from '@/api/agentRuns'
-import { formatDateTime } from '@/lib/utils'
 import { useState } from 'react'
-
-const stageIcons: Record<string, string> = {
-  OBSERVE: '👁',
-  INVESTIGATE: '🔍',
-  DIAGNOSE: '🧠',
-  PLAN: '📋',
-  POLICY_CHECK: '🛡',
-  EXECUTE: '⚡',
-  VERIFY: '✓',
-}
 
 export function AgentRunDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -75,7 +63,7 @@ export function AgentRunDetailPage() {
           <div className="absolute left-[11px] top-0 bottom-0 w-px bg-border" />
 
           <div className="space-y-1">
-            {run.stages.map((stage, i) => {
+            {run.stages.map((stage) => {
               const isExpanded = expandedStage === stage.name
               return (
                 <div key={stage.name}>

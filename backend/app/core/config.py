@@ -54,6 +54,11 @@ class Settings(BaseSettings):
     CONTACT_QUIET_HOURS_END: str = "09:00"
     DEFAULT_TIMEZONE: str = "Asia/Kolkata"
 
+    # JWT Auth
+    JWT_SECRET_KEY: str = "change-me-in-production"
+    JWT_ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+
     # Logging
     LOG_LEVEL: str = "INFO"
 

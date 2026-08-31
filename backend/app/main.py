@@ -88,8 +88,10 @@ from app.api.audit import router as audit_router
 from app.api.consent import router as consent_router
 from app.api.recovery_v2 import router as recovery_v2_router
 from app.api.simulate import router as simulate_router
+from app.api.auth_routes import router as auth_router
 
 app.include_router(health_router, prefix="/api")
+app.include_router(auth_router, prefix="/api")
 app.include_router(payments_router, prefix="/api")
 app.include_router(webhook_router, prefix="/api")
 app.include_router(customer_router, prefix="/api")

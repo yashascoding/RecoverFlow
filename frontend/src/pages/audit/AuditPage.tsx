@@ -3,11 +3,13 @@ import { DataTable, type Column } from '@/components/dashboard/DataTable'
 import { StatusBadge } from '@/components/dashboard/StatusBadge'
 import { TableSkeleton } from '@/components/dashboard/LoadingState'
 import { ErrorState } from '@/components/dashboard/ErrorState'
+import { EmptyState } from '@/components/dashboard/EmptyState'
 import { useApi } from '@/hooks/useApi'
 import { getAuditEvents } from '@/api/audit'
 import { formatDateTime, truncateId } from '@/lib/utils'
 import type { AuditEvent } from '@/types'
 import { useState } from 'react'
+import { FileText } from 'lucide-react'
 
 export function AuditPage() {
   const { data: events, loading, error, refetch } = useApi(getAuditEvents)
@@ -92,6 +94,12 @@ export function AuditPage() {
         <TableSkeleton rows={10} columns={7} />
       ) : error ? (
         <ErrorState message={error} onRetry={refetch} />
+      ) : filtered.length === 0 ? (
+        <EmptyState
+          title="No audit events yet"
+          description="Audit trail will be recorded as recovery actions are executed"
+          icon={<FileText className="w-8 h-8" />}
+        />
       ) : (
         <DataTable
           columns={columns}
