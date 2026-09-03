@@ -16,6 +16,11 @@ import { AgentRunDetailPage } from '@/pages/agent-runs/AgentRunDetailPage'
 import { AuditPage } from '@/pages/audit/AuditPage'
 import { PoliciesPage } from '@/pages/policies/PoliciesPage'
 import { DecisionReplayPage } from '@/pages/replay/DecisionReplayPage'
+import { TransactionMonitoringPage } from '@/pages/monitoring/TransactionMonitoringPage'
+import { FailureAnalysisPage } from '@/pages/monitoring/FailureAnalysisPage'
+import { SpikeDetectionPage } from '@/pages/monitoring/SpikeDetectionPage'
+import { SentinelDashboard } from '@/pages/sentinel/SentinelDashboard'
+import { InvestigationsPage } from '@/pages/investigations/InvestigationsPage'
 
 function App() {
   return (
@@ -55,6 +60,11 @@ function App() {
             <Route path="/audit" element={<AuditPage />} />
             <Route path="/policies" element={<PoliciesPage />} />
             <Route path="/replay/:paymentId" element={<DecisionReplayPage />} />
+            <Route path="/monitoring" element={<TransactionMonitoringPage />} />
+            <Route path="/monitoring/failures" element={<FailureAnalysisPage />} />
+            <Route path="/monitoring/spikes" element={<SpikeDetectionPage />} />
+            <Route path="/sentinel" element={<SentinelDashboard />} />
+            <Route path="/investigations" element={<InvestigationsPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

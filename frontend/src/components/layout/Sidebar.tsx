@@ -2,12 +2,15 @@ import { useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, CreditCard, AlertTriangle, RotateCcw,
-  Bot, FileText, Shield, ChevronLeft, ChevronRight, Activity
+  Bot, FileText, Shield, ChevronLeft, ChevronRight, Activity, Eye, Search
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const navItems = [
   { to: '/overview', label: 'Overview', icon: LayoutDashboard },
+  { to: '/sentinel', label: 'Sentinel', icon: Eye },
+  { to: '/monitoring', label: 'Monitoring', icon: Activity },
+  { to: '/investigations', label: 'Investigations', icon: Search },
   { to: '/payments', label: 'Payments', icon: CreditCard },
   { to: '/incidents', label: 'Incidents', icon: AlertTriangle },
   { to: '/recovery', label: 'Recovery', icon: RotateCcw },

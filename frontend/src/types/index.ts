@@ -146,3 +146,152 @@ export interface ChartDataPoint {
   value: number
   label?: string
 }
+
+export interface TransactionMetrics {
+  total_transactions: number
+  successful_transactions: number
+  failed_transactions: number
+  success_rate: number
+  failure_rate: number
+  revenue_at_risk: number
+  recovered_revenue: number
+  total_revenue: number
+  recovery_rate: number
+}
+
+export interface TimeSeriesPoint {
+  timestamp: string
+  success_rate: number
+  failure_rate: number
+  revenue_at_risk: number
+  recovered_revenue: number
+  total_transactions: number
+}
+
+export interface TransactionMonitoringResponse {
+  metrics: TransactionMetrics
+  time_series: TimeSeriesPoint[]
+  period_start: string
+  period_end: string
+}
+
+export interface FailureGroup {
+  group_name: string
+  group_value: string
+  failure_count: number
+  revenue_at_risk: number
+  percentage: number
+  top_failure_reasons: string[]
+}
+
+export interface FailureAnalysisResponse {
+  total_failures: number
+  revenue_at_risk: number
+  groups: FailureGroup[]
+  period_start: string
+  period_end: string
+  group_by: string
+}
+
+export interface FailureSummary {
+  total_failures: number
+  revenue_at_risk: number
+  by_failure_reason: Array<{ name: string; count: number; revenue_at_risk: number }>
+  by_gateway: Array<{ name: string; count: number; revenue_at_risk: number }>
+  by_bank: Array<{ name: string; count: number; revenue_at_risk: number }>
+  by_region: Array<{ name: string; count: number; revenue_at_risk: number }>
+  by_payment_method: Array<{ name: string; count: number; revenue_at_risk: number }>
+}
+
+export interface SpikeAlert {
+  spike_type: string
+  dimension: string
+  current_count: number
+  baseline_count: number
+  threshold: number
+  severity: string
+  revenue_impact: number
+  detected_at: string
+  message: string
+}
+
+export interface SpikeDetectionResponse {
+  spikes_detected: boolean
+  spike_count: number
+  spikes: SpikeAlert[]
+  period_start: string
+  period_end: string
+  baseline_period_start: string
+  baseline_period_end: string
+}
+
+export interface DegradationMetric {
+  dimension: string
+  current_failure_rate: number
+  previous_failure_rate: number
+  change_percentage: number
+  is_degraded: boolean
+  revenue_impact: number
+}
+
+export type InvestigationState = 'observe' | 'query' | 'correlate' | 'diagnose' | 'completed' | 'failed'
+
+export type InvestigationStatus = 'pending' | 'in_progress' | 'completed' | 'failed'
+
+export interface Investigation {
+  id: string
+  incident_id: string
+  payment_id: string | null
+  state: InvestigationState
+  status: InvestigationStatus
+  title: string
+  description: string | null
+  query_results: Record<string, unknown> | null
+  correlation_results: Record<string, unknown> | null
+  diagnosis: Record<string, unknown> | null
+  started_at: string | null
+  completed_at: string | null
+  metadata_: Record<string, unknown> | null
+  created_at: string
+  updated_at: string
+}
+
+export interface QueryResult {
+  dimension: string
+  value: string
+  count: number
+  revenue_impact: number
+  percentage: number
+}
+
+export interface CorrelationResult {
+  dimension: string
+  value: string
+  contribution_score: number
+  confidence: number
+  rank: number
+}
+
+export interface DiagnosisOutput {
+  primary_contributor: string
+  contributor_dimension: string
+  affected_region: string | null
+  failure_pattern: string
+  confidence: number
+  summary: string
+  recommendation: string
+}
+
+export interface RecoveryStrategy {
+  strategy_name: string
+  description: string
+  actions: Array<{
+    action: string
+    description: string
+    priority: string
+  }>
+  estimated_recovery_rate: number
+  priority: string
+  timeline: string
+  resources_required: string[]
+}

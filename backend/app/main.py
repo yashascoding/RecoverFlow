@@ -91,6 +91,11 @@ from app.api.consent import router as consent_router
 from app.api.recovery_v2 import router as recovery_v2_router
 from app.api.simulate import router as simulate_router
 from app.api.auth_routes import router as auth_router
+from app.api.monitoring import router as monitoring_router
+from app.api.incidents import router as incidents_router
+from app.api.alerts import router as alerts_router
+from app.api.sentinel import router as sentinel_router
+from app.api.investigations import router as investigations_router
 
 app.include_router(health_router, prefix="/api")
 app.include_router(auth_router, prefix="/api")
@@ -104,6 +109,11 @@ app.include_router(audit_router, prefix="/api")
 app.include_router(consent_router, prefix="/api")
 app.include_router(recovery_v2_router, prefix="/api")
 app.include_router(simulate_router, prefix="/api")
+app.include_router(monitoring_router, prefix="/api")
+app.include_router(incidents_router, prefix="/api")
+app.include_router(alerts_router, prefix="/api")
+app.include_router(sentinel_router, prefix="/api")
+app.include_router(investigations_router, prefix="/api")
 
 
 @app.get("/")
