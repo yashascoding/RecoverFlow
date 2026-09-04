@@ -1,41 +1,98 @@
 # RecoverFlow
 
-Imagine a high-volume Indian D2C brand processing thousands of daily transactions-unknowingly losing lakhs in revenue to preventable payment failures. Nearly 70% of cart abandonment in India happens due to payment failures , yet most businesses accept their current success rate as a fixed ceiling. It isn’t. Systematic payment success rate optimization can recover 8–12 percentage points through specific configurations, routing strategies, and failure-recovery techniques
-
-
-RecoverFlow is an autonomous AI payment-recovery system that detects failed payments, investigates root causes, and sends personalized recovery messages through Email to help merchants recover lost revenue.
-
-### Who's It For?
-
-**Meet John.** He runs an online e-commerce store. Every day, some customers fail to complete their payments because of bank issues, UPI timeouts, network problems, or gateway failures.
-
-John doesn't have time to manually chase every failed payment.
-
-**RecoverFlow does it automatically.**
-
-### Meet david 
-
-david wants to buy a **₹2,000 phone case** from John's store, but his payment fails because his bank app is slow.
-
-he forgets about it.
-
-RecoverFlow detects the failure, investigates what happened, checks whether david can be contacted, and sends him a Email message with a payment link.
-
-david clicks, pays, and completes her purchase.
-
-**John recovers the sale. david gets his product.**
-
-### The Flow
+Autonomous AI payment-recovery system that detects failed payments, investigates root causes, and sends personalized recovery messages through Email to help merchants recover lost revenue.
 
 **Payment Failed → AI Investigates → Policy Check → Email → Customer Pays → Revenue Recovered → Audit Trail**
 
-for more details of payment optimisation read this blog by razorpay https://razorpay.com/blog/payment-success-rate-optimization-india/
+---
 
+## Problem
 
-**RECOVERFLOW Architecture**
+<!-- TODO: Write about the problem RecoverFlow solves -->
 
-<img width="1858" height="915" alt="image" src="https://github.com/user-attachments/assets/3dc67985-98fb-4ea2-8339-83226267a188" />
+---
 
+## Solution
 
+<!-- TODO: Write about how RecoverFlow solves the problem -->
 
+---
 
+## Architecture
+
+<!-- TODO: Add architecture diagram and explanation -->
+
+<img width="1858" height="915" alt="architecture" src="https://github.com/user-attachments/assets/3dc67985-98fb-4ea2-8339-83226267a188" />
+
+---
+
+## AI Agent
+
+<!-- TODO: Write about the LangGraph-based AI agent, its tools, and decision-making process -->
+
+---
+
+## Policy Firewall
+
+<!-- TODO: Write about the deterministic policy engine, consent checks, financial limits, kill switch -->
+
+---
+
+## Razorpay
+
+<!-- TODO: Write about Razorpay integration — payment links, webhooks, capture flow -->
+
+---
+
+## Resend
+
+<!-- TODO: Write about Resend email integration — templates, delivery, webhooks -->
+
+---
+
+## Evaluation
+
+<!-- TODO: Write about the evaluation methodology — control groups, A/B testing, metrics -->
+
+---
+
+## Results
+
+<!-- TODO: Write about recovery rates, revenue recovered, lift over control -->
+
+---
+
+## Failure Handling
+
+<!-- TODO: Write about how the system handles edge cases — idempotency, retries, dead letters -->
+
+---
+
+## Setup
+
+<!-- TODO: Write setup instructions — prerequisites, env vars, docker compose, local dev -->
+
+```bash
+# Clone
+git clone https://github.com/your-org/RecoverFlow.git
+cd RecoverFlow
+
+# Environment
+cp .env.example .env
+# Edit .env with your keys
+
+# Run
+docker compose up --build
+```
+
+---
+
+## Demo
+
+<!-- TODO: Write demo walkthrough — how to simulate a failure and watch recovery -->
+
+---
+
+## Future Work
+
+<!-- TODO: Write about planned features — SMS recovery, multi-gateway, smart timing, etc. -->

@@ -3,17 +3,20 @@ import { useNavigate } from 'react-router-dom'
 import {
   ArrowRight, CheckCircle2, Shield, Zap, Eye, Brain,
   Mail, BarChart3, ChevronDown, Play, AlertTriangle,
-  Search, Clock, Bot, FileCheck, Lock, Activity
+  Search, Clock, Bot, FileCheck, Lock, Activity,
+  Database, Cpu, Globe, Layers, Server, GitBranch
 } from 'lucide-react'
 import './landing.css'
 
-function useInView(threshold = 0.15) {
+/* ─── Hooks ────────────────────────────────────────────────────────────── */
+
+function useInView(threshold = 0.12) {
   const ref = useRef<HTMLDivElement>(null)
   const [inView, setInView] = useState(false)
   useEffect(() => {
     const el = ref.current
     if (!el) return
-    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) setInView(true) }, { threshold })
+    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) setInView(true) }, { threshold, rootMargin: '0px 0px -60px 0px' })
     obs.observe(el)
     return () => obs.disconnect()
   }, [threshold])
@@ -49,14 +52,14 @@ function LandingNavbar() {
   }, [])
 
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-background/80 backdrop-blur-xl border-b border-border' : 'bg-transparent'}`}>
+    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled ? 'bg-background/80 backdrop-blur-xl border-b border-border shadow-lg shadow-black/5' : 'bg-transparent'}`}>
       <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-md bg-blue-500 flex items-center justify-center text-white text-xs font-bold">RF</div>
           <span className="text-sm font-semibold text-foreground">RecoverFlow</span>
         </div>
         <div className="hidden md:flex items-center gap-6">
-          {['Product', 'How It Works', 'Safety', 'Results', 'FAQ'].map(s => (
+          {['Problem', 'How It Works', 'Safety', 'Results', 'FAQ'].map(s => (
             <a key={s} href={`#${s.toLowerCase().replace(/ /g, '-')}`} className="text-[13px] text-muted-foreground hover:text-foreground transition-colors">{s}</a>
           ))}
         </div>
@@ -130,7 +133,7 @@ function HeroPipeline() {
 }
 
 function Typewriter() {
-  const fullText = "Failed payments don't have to become lost revenue."
+  const fullText = "Failed payments silently become lost revenue."
   const [displayed, setDisplayed] = useState('')
   const [done, setDone] = useState(false)
 
@@ -158,8 +161,7 @@ function Typewriter() {
 function Hero() {
   const navigate = useNavigate()
   return (
-    <section className="relative min-h-[650px] overflow-hidden pt-32 pb-20 px-6">
-      {/* Background video */}
+    <section className="relative min-h-[730px] overflow-hidden pt-32 pb-20 px-6">
       <video
         autoPlay
         muted
@@ -170,14 +172,8 @@ function Hero() {
       >
         <source src="/videos/payment.mp4" type="video/mp4" />
       </video>
-
-      {/* Darkening layer */}
       <div className="absolute inset-0 bg-black/20" />
-
-      {/* Blue atmospheric glow */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(37,99,235,0.18),transparent_60%)]" />
-
-      {/* Existing UI */}
       <div className="relative z-10 max-w-6xl mx-auto">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <div>
@@ -200,11 +196,11 @@ function Hero() {
                 <ArrowRight className="w-4 h-4" />
               </button>
               <button
-                onClick={() => document.getElementById('real-recovery-story')?.scrollIntoView({ behavior: 'smooth' })}
+                onClick={() => document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' })}
                 className="px-6 py-3 rounded-md border border-border text-sm font-medium text-foreground hover:bg-secondary/50 transition-colors inline-flex items-center gap-2 backdrop-blur-sm"
               >
                 <Play className="w-3.5 h-3.5" />
-                Watch Recovery Flow
+                Watch Recovery
               </button>
             </div>
           </div>
@@ -217,35 +213,116 @@ function Hero() {
   )
 }
 
-/* ─── Problem / Solution ────────────────────────────────────────────── */
+/* ─── Trust / Metrics ──────────────────────────────────────────────── */
 
-function ProblemSolution() {
+function TrustMetrics() {
   const { ref, inView } = useInView()
-  const cards = [
-    { icon: Eye, title: 'Detect', desc: 'Automatically detect failed payment events and identify revenue at risk.' },
-    { icon: Brain, title: 'Understand', desc: 'Investigate customer, payment, history, gateway, bank, region and failure context.' },
-    { icon: CheckCircle2, title: 'Recover', desc: 'Select a policy-approved recovery strategy, communicate with the customer, and verify successful payment.' },
+  const recovered = useCountUp(96, 1200, inView)
+  const rate = useCountUp(72, 1200, inView)
+  const payments = useCountUp(47, 1200, inView)
+  const cost = useCountUp(2, 1200, inView)
+
+  const metrics = [
+    { label: 'Revenue Recovered', value: `₹${recovered},420`, color: 'text-emerald-400' },
+    { label: 'Recovery Rate', value: `${rate}%`, color: 'text-blue-400' },
+    { label: 'Failed Payments Handled', value: `${payments}`, color: 'text-amber-400' },
+    { label: 'AI Cost Per Run', value: `₹0.0${cost}`, color: 'text-muted-foreground' },
+  ]
+
+  return (
+    <section ref={ref} className="py-16 px-6 border-y border-border bg-secondary/20">
+      <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8">
+        {metrics.map((m, i) => (
+          <div
+            key={i}
+            className={`text-center transition-all duration-700 ${inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+            style={{ transitionDelay: `${i * 100}ms` }}
+          >
+            <p className="text-3xl md:text-4xl font-bold font-mono mt-1">{m.value}</p>
+            <p className="text-[11px] text-muted-foreground uppercase tracking-wider mt-2">{m.label}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+/* ─── The Problem ──────────────────────────────────────────────────── */
+
+function TheProblem() {
+  const { ref, inView } = useInView()
+  return (
+    <section id="problem" ref={ref} className="py-24 px-6 landing-section">
+      <div className="max-w-3xl mx-auto text-center">
+        <div className={`transition-all duration-700 ${inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight">
+            "Failed payments silently become lost revenue."
+          </h2>
+          <p className="mt-6 text-lg text-muted-foreground leading-relaxed">
+            Every failed transaction is a customer who wanted to pay you. Without automated recovery, those payments disappear — no retry, no follow-up, no revenue.
+          </p>
+          <div className="mt-10 grid md:grid-cols-3 gap-6">
+            {[
+              { stat: '23%', desc: 'of failed payments are never retried by customers' },
+              { stat: '₹38K', desc: 'average monthly revenue lost per merchant to payment failures' },
+              { stat: '4.2hrs', desc: 'average time before a manual team even notices a failure' },
+            ].map((s, i) => (
+              <div key={i} className="rounded-lg border border-border bg-card p-5" style={{ transitionDelay: `${i * 100}ms` }}>
+                <p className="text-2xl font-bold font-mono text-red-400">{s.stat}</p>
+                <p className="text-[13px] text-muted-foreground mt-2">{s.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/* ─── How RecoverFlow Works ────────────────────────────────────────── */
+
+function HowItWorks() {
+  const { ref, inView } = useInView()
+  const steps = [
+    { num: '01', title: 'Failure', desc: 'Payment fails at gateway', icon: AlertTriangle, color: 'text-red-400' },
+    { num: '02', title: 'Detection', desc: 'Webhook triggers recovery pipeline', icon: Eye, color: 'text-amber-400' },
+    { num: '03', title: 'Investigation', desc: 'AI analyzes payment, customer, and context', icon: Brain, color: 'text-blue-400' },
+    { num: '04', title: 'Policy Check', desc: 'Deterministic firewall validates the action', icon: Shield, color: 'text-emerald-400' },
+    { num: '05', title: 'Recovery', desc: 'Personalized email with payment link sent', icon: Mail, color: 'text-blue-400' },
   ]
   return (
-    <section id="product" ref={ref} className="py-24 px-6 landing-section">
+    <section id="how-it-works" ref={ref} className="py-24 px-6 landing-section">
       <div className="max-w-6xl mx-auto">
-        <h2 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight max-w-2xl">
-          A failed payment is more than an error. It's revenue at risk.
+        <h2 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight text-center">
+          How RecoverFlow works
         </h2>
-        <div className="mt-14 grid md:grid-cols-3 gap-6">
-          {cards.map((c, i) => {
-            const Icon = c.icon
+        <p className="text-center text-muted-foreground mt-3 max-w-xl mx-auto">
+          Five autonomous steps from failure to recovered revenue.
+        </p>
+        <div className="mt-14 flex flex-col md:flex-row items-start gap-4">
+          {steps.map((s, i) => {
+            const Icon = s.icon
             return (
               <div
                 key={i}
-                className={`rounded-lg border border-border bg-card p-6 transition-all duration-500 ${inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
-                style={{ transitionDelay: `${i * 100}ms` }}
+                className={`flex-1 relative transition-all duration-700 ${inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
+                style={{ transitionDelay: `${i * 120}ms` }}
               >
-                <div className="w-9 h-9 rounded-md bg-blue-500/10 flex items-center justify-center mb-4">
-                  <Icon className="w-4.5 h-4.5 text-blue-400" />
+                <div className="rounded-lg border border-border bg-card p-5 h-full">
+                  <span className="text-[10px] text-muted-foreground font-mono">{s.num}</span>
+                  <div className="mt-3 flex items-center gap-2.5">
+                    <div className={`w-9 h-9 rounded-md bg-secondary/50 flex items-center justify-center`}>
+                      <Icon className={`w-4.5 h-4.5 ${s.color}`} />
+                    </div>
+                    <h3 className="text-sm font-semibold text-foreground">{s.title}</h3>
+                  </div>
+                  <p className="text-[13px] text-muted-foreground mt-2">{s.desc}</p>
                 </div>
-                <h3 className="text-sm font-semibold text-foreground mb-2">{c.title}</h3>
-                <p className="text-[13px] text-muted-foreground leading-relaxed">{c.desc}</p>
+                {i < steps.length - 1 && (
+                  <div className="hidden md:flex absolute top-1/2 -right-2 w-4 h-px bg-border items-center justify-center">
+                    <div className="w-1 h-1 rounded-full bg-muted-foreground/40" />
+                  </div>
+                )}
               </div>
             )
           })}
@@ -255,146 +332,70 @@ function ProblemSolution() {
   )
 }
 
-/* ─── Product Showcase ──────────────────────────────────────────────── */
+/* ─── Live Recovery Timeline ───────────────────────────────────────── */
 
-function ProductShowcase() {
+function LiveTimeline() {
   const { ref, inView } = useInView()
-  return (
-    <section id="showcase" ref={ref} className="py-24 px-6 landing-section">
-      <div className="max-w-6xl mx-auto">
-        <h2 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight text-center">
-          See recovery happen in real time.
-        </h2>
-        <div className={`mt-14 transition-all duration-700 ${inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-          {/* Dashboard mockup */}
-          <div className="bg-[#0c0c0e] border border-border rounded-lg overflow-hidden">
-            {/* Title bar */}
-            <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border">
-              <div className="flex gap-1.5">
-                <div className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]" />
-                <div className="w-2.5 h-2.5 rounded-full bg-[#febc2e]" />
-                <div className="w-2.5 h-2.5 rounded-full bg-[#28c840]" />
-              </div>
-              <span className="text-[11px] text-muted-foreground ml-2 font-mono">RecoverFlow — Dashboard</span>
-            </div>
-            {/* Content */}
-            <div className="p-5">
-              {/* Metrics row */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
-                {[
-                  { label: 'Revenue At Risk', value: '₹38,520', color: 'text-amber-400' },
-                  { label: 'Recovered Revenue', value: '₹96,420', color: 'text-emerald-400' },
-                  { label: 'Failed Payments', value: '47', color: 'text-red-400' },
-                  { label: 'Recovery Rate', value: '72.3%', color: 'text-blue-400' },
-                ].map((m, i) => (
-                  <div key={i} className="bg-secondary/30 rounded-md p-3">
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{m.label}</p>
-                    <p className={`text-lg font-bold font-mono mt-1 ${m.color}`}>{m.value}</p>
-                  </div>
-                ))}
-              </div>
-              {/* Payment detail */}
-              <div className="bg-secondary/20 rounded-md p-4 border border-border">
-                <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[12px] font-mono text-muted-foreground">pay_8291</span>
-                      <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-500/15 text-red-400 border border-red-500/20">FAILED</span>
-                    </div>
-                    <p className="text-sm font-medium text-foreground mt-1">Rahul Sharma — ₹2,499</p>
-                  </div>
-                  <span className="text-[10px] text-muted-foreground font-mono">UPI_TIMEOUT</span>
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {[
-                    { label: 'AI Diagnosis', value: 'UPI timeout detected', icon: Brain },
-                    { label: 'Confidence', value: '91%', icon: Activity },
-                    { label: 'Recommended Action', value: 'EMAIL_PAYMENT_LINK', icon: Mail },
-                    { label: 'Recovery', value: 'RECOVERED', icon: CheckCircle2, color: 'text-emerald-400' },
-                  ].map((d, i) => {
-                    const Icon = d.icon
-                    return (
-                      <div key={i} className="bg-background/50 rounded-md p-2.5">
-                        <div className="flex items-center gap-1.5 mb-1">
-                          <Icon className="w-3 h-3 text-muted-foreground" />
-                          <span className="text-[10px] text-muted-foreground uppercase">{d.label}</span>
-                        </div>
-                        <p className={`text-[12px] font-mono font-medium ${d.color || 'text-foreground'}`}>{d.value}</p>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  )
-}
+  const [activeIdx, setActiveIdx] = useState(-1)
 
-/* ─── Agent Trace ───────────────────────────────────────────────────── */
+  useEffect(() => {
+    if (!inView) return
+    let idx = 0
+    const iv = setInterval(() => {
+      setActiveIdx(idx)
+      idx++
+      if (idx >= timelineEvents.length) {
+        clearInterval(iv)
+      }
+    }, 600)
+    return () => clearInterval(iv)
+  }, [inView])
 
-function AgentTrace() {
-  const { ref, inView } = useInView()
-  const [expanded, setExpanded] = useState<number | null>(null)
-
-  const steps = [
-    { name: 'OBSERVE', status: 'completed', tool: 'fetch_payment', args: '{ payment_id: "pay_8291" }', result: '{ status: "failed", amount: 249900, failure: "UPI_TIMEOUT" }', latency: '12ms' },
-    { name: 'INVESTIGATE', status: 'completed', tool: 'check_consent', args: '{ customer_id: "cust_041", channel: "email" }', result: '{ consented: true, previous_payments: 3 }', latency: '8ms' },
-    { name: 'DIAGNOSE', status: 'completed', tool: 'diagnose_failure', args: '{ failure_reason: "UPI_TIMEOUT", history: [...] }', result: '{ diagnosis: "upi_timeout", confidence: 0.91, risk: "LOW" }', latency: '890ms' },
-    { name: 'PLAN', status: 'completed', tool: 'recommend_action', args: '{ diagnosis: "upi_timeout", consent: true }', result: '{ action: "EMAIL_PAYMENT_LINK", reason: "Temporary failure, good history" }', latency: '45ms' },
-    { name: 'POLICY', status: 'completed', tool: 'evaluate_policy', args: '{ action: "EMAIL_PAYMENT_LINK", amount: 249900 }', result: '{ max_auto: PASS, consent: PASS, daily_limit: PASS }', latency: '3ms' },
-    { name: 'EXECUTE', status: 'completed', tool: 'send_recovery_email', args: '{ to: "rahul.sharma@...", template: "payment_failure" }', result: '{ message_id: "msg_8291", provider: "resend", delivered: true }', latency: '230ms' },
-    { name: 'VERIFY', status: 'completed', tool: 'check_payment_status', args: '{ order_id: "order_8291" }', result: '{ status: "recovered", amount: 249900, recovered_at: "..." }', latency: '15ms' },
+  const timelineEvents = [
+    { time: '14:32:01', event: 'payment.failed', detail: 'order_8291 — ₹2,499 — UPI_TIMEOUT', icon: AlertTriangle, color: 'text-red-400', bg: 'bg-red-500/10' },
+    { time: '14:32:01', event: 'event.dispatched', detail: 'Razorpay webhook received, event persisted', icon: Zap, color: 'text-amber-400', bg: 'bg-amber-500/10' },
+    { time: '14:32:02', event: 'worker.processing', detail: 'Event picked up by recovery worker', icon: Cpu, color: 'text-blue-400', bg: 'bg-blue-500/10' },
+    { time: '14:32:03', event: 'consent.verified', detail: 'Customer has email consent — proceed', icon: Shield, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
+    { time: '14:32:04', event: 'ai.diagnosis', detail: 'UPI timeout — confidence 91% — risk LOW', icon: Brain, color: 'text-blue-400', bg: 'bg-blue-500/10' },
+    { time: '14:32:04', event: 'policy.evaluated', detail: 'ALLOW — max_auto: PASS, consent: PASS', icon: Shield, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
+    { time: '14:32:05', event: 'email.sent', detail: 'Recovery email delivered via Resend', icon: Mail, color: 'text-blue-400', bg: 'bg-blue-500/10' },
+    { time: '14:35:12', event: 'payment.recovered', detail: 'Customer retried — ₹2,499 captured', icon: CheckCircle2, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
   ]
 
   return (
-    <section id="how-it-works" ref={ref} className="py-24 px-6 landing-section">
-      <div className="max-w-6xl mx-auto">
+    <section ref={ref} className="py-24 px-6 landing-section bg-secondary/10">
+      <div className="max-w-3xl mx-auto">
         <h2 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight text-center">
-          Every AI decision is observable.
+          Live Recovery Timeline
         </h2>
         <p className="text-center text-muted-foreground mt-3 max-w-xl mx-auto">
-          Full agent trace with tool calls, arguments, results, and timing for every recovery decision.
+          Actual event stream from a recovered payment — every step logged.
         </p>
-        <div className={`mt-14 max-w-2xl mx-auto transition-all duration-700 ${inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-          <div className="bg-[#0c0c0e] border border-border rounded-lg overflow-hidden">
+        <div className={`mt-14 transition-all duration-700 ${inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+          <div className="bg-[#0c0c0e] border border-border rounded-lg overflow-hidden font-mono">
             <div className="px-4 py-3 border-b border-border flex items-center gap-2">
-              <Bot className="w-4 h-4 text-blue-400" />
-              <span className="text-[12px] font-mono text-foreground">Agent Trace — pay_8291</span>
-              <span className="ml-auto text-[10px] text-emerald-400 font-mono">COMPLETED</span>
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[11px] text-muted-foreground">event_stream — pay_8291</span>
             </div>
-            <div className="divide-y divide-border">
-              {steps.map((step, i) => {
-                const isExpanded = expanded === i
+            <div className="p-4 space-y-0">
+              {timelineEvents.map((ev, i) => {
+                const Icon = ev.icon
+                const visible = i <= activeIdx
                 return (
-                  <div key={i}>
-                    <button
-                      onClick={() => setExpanded(isExpanded ? null : i)}
-                      className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-secondary/20 transition-colors"
-                    >
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                      <span className="text-[12px] font-mono font-medium text-foreground flex-1">{step.name}</span>
-                      <span className="text-[10px] text-muted-foreground font-mono">{step.latency}</span>
-                      <ChevronDown className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-                    </button>
-                    {isExpanded && (
-                      <div className="px-4 pb-3 ml-7 space-y-2 animate-slide-in">
-                        <div>
-                          <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Tool</span>
-                          <p className="text-[11px] font-mono text-foreground">{step.tool}</p>
-                        </div>
-                        <div>
-                          <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Arguments</span>
-                          <p className="text-[11px] font-mono text-muted-foreground">{step.args}</p>
-                        </div>
-                        <div>
-                          <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Result</span>
-                          <p className="text-[11px] font-mono text-emerald-400/80">{step.result}</p>
-                        </div>
+                  <div
+                    key={i}
+                    className={`flex items-start gap-3 py-2 transition-all duration-500 ${visible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}
+                  >
+                    <span className="text-[10px] text-muted-foreground w-16 shrink-0 pt-0.5">{ev.time}</span>
+                    <div className={`w-6 h-6 rounded-full ${ev.bg} flex items-center justify-center shrink-0`}>
+                      <Icon className={`w-3 h-3 ${ev.color}`} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-[11px] font-medium ${ev.color}`}>{ev.event}</span>
                       </div>
-                    )}
+                      <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{ev.detail}</p>
+                    </div>
                   </div>
                 )
               })}
@@ -406,85 +407,100 @@ function AgentTrace() {
   )
 }
 
-/* ─── How It Works ──────────────────────────────────────────────────── */
+/* ─── AI Investigation ─────────────────────────────────────────────── */
 
-function HowItWorks() {
+function AIInvestigation() {
   const { ref, inView } = useInView()
+  const [expanded, setExpanded] = useState<number | null>(null)
+
   const steps = [
-    { num: '01', title: 'Detect', desc: 'Payment failure arrives', icon: AlertTriangle },
-    { num: '02', title: 'Investigate', desc: 'Analyze payment and customer context', icon: Search },
-    { num: '03', title: 'Diagnose', desc: 'Determine likely failure cause', icon: Brain },
-    { num: '04', title: 'Decide', desc: 'Select recovery strategy', icon: Zap },
-    { num: '05', title: 'Protect', desc: 'Policy Firewall validates the action', icon: Shield },
-    { num: '06', title: 'Recover', desc: 'Send secure payment link', icon: Mail },
-    { num: '07', title: 'Verify', desc: 'Confirm successful payment', icon: CheckCircle2 },
-    { num: '08', title: 'Measure', desc: 'Calculate recovered revenue', icon: BarChart3 },
+    { name: 'OBSERVE', tool: 'fetch_payment', args: '{ payment_id: "pay_8291" }', result: '{ status: "failed", amount: 249900, failure: "UPI_TIMEOUT" }', latency: '12ms' },
+    { name: 'INVESTIGATE', tool: 'check_consent', args: '{ customer_id: "cust_041", channel: "email" }', result: '{ consented: true, previous_payments: 3 }', latency: '8ms' },
+    { name: 'DIAGNOSE', tool: 'diagnose_failure', args: '{ failure_reason: "UPI_TIMEOUT", history: [...] }', result: '{ diagnosis: "upi_timeout", confidence: 0.91, risk: "LOW" }', latency: '890ms' },
+    { name: 'PLAN', tool: 'recommend_action', args: '{ diagnosis: "upi_timeout", consent: true }', result: '{ action: "EMAIL_PAYMENT_LINK", reason: "Temporary failure, good history" }', latency: '45ms' },
+    { name: 'EXECUTE', tool: 'send_recovery_email', args: '{ to: "rahul.sharma@...", template: "payment_failure" }', result: '{ message_id: "msg_8291", delivered: true }', latency: '230ms' },
   ]
+
   return (
     <section ref={ref} className="py-24 px-6 landing-section">
       <div className="max-w-6xl mx-auto">
         <h2 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight text-center">
-          From payment failure to recovered revenue.
+          AI Investigation
         </h2>
-        <div className="mt-14 grid md:grid-cols-4 gap-4">
-          {steps.map((s, i) => {
-            const Icon = s.icon
-            return (
-              <div
-                key={i}
-                className={`relative rounded-lg border border-border bg-card p-5 transition-all duration-500 ${inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
-                style={{ transitionDelay: `${i * 80}ms` }}
-              >
-                <span className="text-[10px] text-muted-foreground font-mono">{s.num}</span>
-                <div className="mt-2 flex items-center gap-2">
-                  <Icon className="w-4 h-4 text-blue-400" />
-                  <h3 className="text-sm font-semibold text-foreground">{s.title}</h3>
-                </div>
-                <p className="text-[13px] text-muted-foreground mt-1.5">{s.desc}</p>
-                {i < steps.length - 1 && (
-                  <div className="hidden md:block absolute top-1/2 -right-2 w-4 h-px bg-border" />
-                )}
+        <p className="text-center text-muted-foreground mt-3 max-w-xl mx-auto">
+          Every diagnosis includes reasoning, confidence, and full tool trace.
+        </p>
+        <div className="mt-14 grid lg:grid-cols-2 gap-8 items-start">
+          {/* Diagnosis Summary */}
+          <div className={`transition-all duration-700 ${inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+            <div className="bg-[#0c0c0e] border border-border rounded-lg p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Brain className="w-4 h-4 text-blue-400" />
+                <span className="text-[12px] font-mono text-foreground">diagnosis.summary</span>
               </div>
-            )
-          })}
-        </div>
-      </div>
-    </section>
-  )
-}
-
-/* ─── Differentiation ───────────────────────────────────────────────── */
-
-function Differentiation() {
-  const { ref, inView } = useInView()
-  const rows = [
-    { traditional: 'Blad retries', rf: 'Context-aware recovery' },
-    { traditional: 'Manual investigation', rf: 'AI investigation' },
-    { traditional: 'Static rules', rf: 'AI + deterministic policy' },
-    { traditional: 'Limited visibility', rf: 'Full agent trace' },
-    { traditional: 'No recovery attribution', rf: 'Recovered revenue metrics' },
-    { traditional: 'Hard to audit', rf: 'Complete audit trail' },
-  ]
-  return (
-    <section ref={ref} className="py-24 px-6 landing-section">
-      <div className="max-w-4xl mx-auto">
-        <h2 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight text-center">
-          Not just retry. Recover intelligently.
-        </h2>
-        <div className={`mt-14 rounded-lg border border-border bg-card overflow-hidden transition-all duration-700 ${inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-          <div className="grid grid-cols-2 border-b border-border">
-            <div className="px-5 py-3 text-[11px] text-muted-foreground uppercase tracking-wider font-medium">Traditional Recovery</div>
-            <div className="px-5 py-3 text-[11px] text-blue-400 uppercase tracking-wider font-medium">RecoverFlow</div>
-          </div>
-          {rows.map((r, i) => (
-            <div key={i} className={`grid grid-cols-2 ${i < rows.length - 1 ? 'border-b border-border' : ''}`}>
-              <div className="px-5 py-3 text-[13px] text-muted-foreground">{r.traditional}</div>
-              <div className="px-5 py-3 text-[13px] text-foreground font-medium flex items-center gap-2">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                {r.rf}
+              <div className="space-y-3">
+                {[
+                  { label: 'Failure Type', value: 'UPI_TIMEOUT', color: 'text-amber-400' },
+                  { label: 'Confidence', value: '91%', color: 'text-emerald-400' },
+                  { label: 'Risk Level', value: 'LOW', color: 'text-emerald-400' },
+                  { label: 'Root Cause', value: 'Temporary bank gateway timeout', color: 'text-foreground' },
+                  { label: 'Customer History', value: '3 successful payments, 0 previous failures', color: 'text-foreground' },
+                  { label: 'Recommendation', value: 'EMAIL_PAYMENT_LINK', color: 'text-blue-400' },
+                  { label: 'Reasoning', value: 'Temporary failure with good payment history — email recovery appropriate', color: 'text-muted-foreground' },
+                ].map((r, i) => (
+                  <div key={i} className="flex items-start justify-between gap-4">
+                    <span className="text-[11px] text-muted-foreground shrink-0">{r.label}</span>
+                    <span className={`text-[11px] font-mono text-right ${r.color}`}>{r.value}</span>
+                  </div>
+                ))}
               </div>
             </div>
-          ))}
+          </div>
+
+          {/* Agent Trace */}
+          <div className={`transition-all duration-700 delay-200 ${inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+            <div className="bg-[#0c0c0e] border border-border rounded-lg overflow-hidden">
+              <div className="px-4 py-3 border-b border-border flex items-center gap-2">
+                <Bot className="w-4 h-4 text-blue-400" />
+                <span className="text-[12px] font-mono text-foreground">agent.trace</span>
+                <span className="ml-auto text-[10px] text-emerald-400 font-mono">COMPLETED</span>
+              </div>
+              <div className="divide-y divide-border">
+                {steps.map((step, i) => {
+                  const isExpanded = expanded === i
+                  return (
+                    <div key={i}>
+                      <button
+                        onClick={() => setExpanded(isExpanded ? null : i)}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-secondary/20 transition-colors"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                        <span className="text-[11px] font-mono font-medium text-foreground flex-1">{step.name}</span>
+                        <span className="text-[10px] text-muted-foreground font-mono">{step.latency}</span>
+                        <ChevronDown className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                      </button>
+                      {isExpanded && (
+                        <div className="px-4 pb-3 ml-6 space-y-2 animate-slide-in">
+                          <div>
+                            <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Tool</span>
+                            <p className="text-[11px] font-mono text-foreground">{step.tool}</p>
+                          </div>
+                          <div>
+                            <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Arguments</span>
+                            <p className="text-[11px] font-mono text-muted-foreground">{step.args}</p>
+                          </div>
+                          <div>
+                            <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Result</span>
+                            <p className="text-[11px] font-mono text-emerald-400/80">{step.result}</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -497,18 +513,18 @@ function PolicyFirewall() {
   const { ref, inView } = useInView()
   const controls = [
     { icon: Lock, title: 'Consent Required', desc: 'No recovery email without customer consent.' },
-    { icon: Shield, title: 'Financial Limits', desc: 'High-value payments can require human review.' },
+    { icon: Shield, title: 'Financial Limits', desc: 'High-value payments require human review.' },
     { icon: AlertTriangle, title: 'Kill Switch', desc: 'Stop automated recovery immediately.' },
     { icon: FileCheck, title: 'Complete Audit', desc: 'Record who, what, why, policy and result.' },
   ]
   return (
-    <section id="safety" ref={ref} className="py-24 px-6 landing-section">
+    <section id="safety" ref={ref} className="py-24 px-6 landing-section bg-secondary/10">
       <div className="max-w-6xl mx-auto">
         <h2 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight text-center">
-          Autonomous doesn't mean uncontrolled.
+          Policy Firewall
         </h2>
         <p className="text-center text-muted-foreground mt-3 max-w-xl mx-auto">
-          Every AI action passes through a deterministic policy firewall before execution.
+          Autonomous doesn't mean uncontrolled. Every AI action passes through deterministic policy checks.
         </p>
 
         {/* Visual diagram */}
@@ -568,6 +584,195 @@ function PolicyFirewall() {
   )
 }
 
+/* ─── Recovery Dashboard ───────────────────────────────────────────── */
+
+function RecoveryDashboard() {
+  const { ref, inView } = useInView()
+  return (
+    <section ref={ref} className="py-24 px-6 landing-section">
+      <div className="max-w-6xl mx-auto">
+        <h2 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight text-center">
+          Recovery Dashboard
+        </h2>
+        <p className="text-center text-muted-foreground mt-3 max-w-xl mx-auto">
+          Real-time visibility into recovered revenue, attempts, and success rate.
+        </p>
+        <div className={`mt-14 transition-all duration-700 ${inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+          <div className="bg-[#0c0c0e] border border-border rounded-lg overflow-hidden">
+            <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border">
+              <div className="flex gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]" />
+                <div className="w-2.5 h-2.5 rounded-full bg-[#febc2e]" />
+                <div className="w-2.5 h-2.5 rounded-full bg-[#28c840]" />
+              </div>
+              <span className="text-[11px] text-muted-foreground ml-2 font-mono">RecoverFlow — Dashboard</span>
+            </div>
+            <div className="p-5">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+                {[
+                  { label: 'Revenue At Risk', value: '₹38,520', color: 'text-amber-400' },
+                  { label: 'Recovered Revenue', value: '₹96,420', color: 'text-emerald-400' },
+                  { label: 'Failed Payments', value: '47', color: 'text-red-400' },
+                  { label: 'Recovery Rate', value: '72.3%', color: 'text-blue-400' },
+                ].map((m, i) => (
+                  <div key={i} className="bg-secondary/30 rounded-md p-3">
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{m.label}</p>
+                    <p className={`text-lg font-bold font-mono mt-1 ${m.color}`}>{m.value}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="bg-secondary/20 rounded-md p-4 border border-border">
+                <div className="flex items-start justify-between mb-3">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[12px] font-mono text-muted-foreground">pay_8291</span>
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-500/15 text-red-400 border border-red-500/20">FAILED</span>
+                    </div>
+                    <p className="text-sm font-medium text-foreground mt-1">Rahul Sharma — ₹2,499</p>
+                  </div>
+                  <span className="text-[10px] text-muted-foreground font-mono">UPI_TIMEOUT</span>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {[
+                    { label: 'AI Diagnosis', value: 'UPI timeout detected', icon: Brain },
+                    { label: 'Confidence', value: '91%', icon: Activity },
+                    { label: 'Action', value: 'EMAIL_PAYMENT_LINK', icon: Mail },
+                    { label: 'Recovery', value: 'RECOVERED', icon: CheckCircle2, color: 'text-emerald-400' },
+                  ].map((d, i) => {
+                    const Icon = d.icon
+                    return (
+                      <div key={i} className="bg-background/50 rounded-md p-2.5">
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <Icon className="w-3 h-3 text-muted-foreground" />
+                          <span className="text-[10px] text-muted-foreground uppercase">{d.label}</span>
+                        </div>
+                        <p className={`text-[12px] font-mono font-medium ${d.color || 'text-foreground'}`}>{d.value}</p>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/* ─── Architecture ─────────────────────────────────────────────────── */
+
+function Architecture() {
+  const { ref, inView } = useInView()
+  const layers = [
+    { label: 'PostgreSQL', desc: 'Event store, payments, audit trail', icon: Database, color: 'text-blue-400' },
+    { label: 'Redis', desc: 'Event queue, dedup, rate limiting', icon: Server, color: 'text-red-400' },
+    { label: 'Workers', desc: 'Async event processing', icon: Cpu, color: 'text-amber-400' },
+    { label: 'LangGraph', desc: 'AI agent orchestration', icon: Brain, color: 'text-blue-400' },
+    { label: 'Razorpay', desc: 'Payment links & capture', icon: Zap, color: 'text-blue-500' },
+    { label: 'Resend', desc: 'Transactional email delivery', icon: Mail, color: 'text-emerald-400' },
+  ]
+  return (
+    <section ref={ref} className="py-24 px-6 landing-section bg-secondary/10">
+      <div className="max-w-6xl mx-auto">
+        <h2 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight text-center">
+          Architecture
+        </h2>
+        <p className="text-center text-muted-foreground mt-3 max-w-xl mx-auto">
+          Event-driven, auditable, and built on proven infrastructure.
+        </p>
+        <div className={`mt-14 transition-all duration-700 ${inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+          <div className="bg-[#0c0c0e] border border-border rounded-lg p-6">
+            <div className="flex flex-col items-center gap-0">
+              {layers.map((l, i) => {
+                const Icon = l.icon
+                return (
+                  <div key={i} className="w-full max-w-md">
+                    <div className={`flex items-center gap-3 px-4 py-3 rounded-md border border-border bg-secondary/20 transition-all duration-500 ${inView ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`} style={{ transitionDelay: `${i * 100}ms` }}>
+                      <Icon className={`w-4 h-4 ${l.color} shrink-0`} />
+                      <div className="flex-1">
+                        <span className="text-[12px] font-mono font-medium text-foreground">{l.label}</span>
+                        <span className="text-[11px] text-muted-foreground ml-2">{l.desc}</span>
+                      </div>
+                    </div>
+                    {i < layers.length - 1 && (
+                      <div className="flex justify-center py-1">
+                        <div className="w-px h-4 bg-border" />
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/* ─── Demo ─────────────────────────────────────────────────────────── */
+
+function Demo() {
+  const { ref, inView } = useInView()
+  const [step, setStep] = useState(0)
+
+  const demoSteps = [
+    { label: 'Payment fails', detail: 'Razorpay webhook: order_8291, ₹2,499, UPI_TIMEOUT', icon: AlertTriangle, color: 'text-red-400' },
+    { label: 'AI investigates', detail: 'Analyzing failure pattern, customer history, consent status', icon: Brain, color: 'text-blue-400' },
+    { label: 'Policy approves', detail: 'Consent: PASS | Amount: PASS | Daily limit: PASS', icon: Shield, color: 'text-emerald-400' },
+    { label: 'Email sent', detail: 'Personalized recovery email with Razorpay payment link', icon: Mail, color: 'text-blue-400' },
+    { label: 'Customer pays', detail: 'Payment link clicked → ₹2,499 captured via Razorpay', icon: CheckCircle2, color: 'text-emerald-400' },
+    { label: 'Revenue recovered', detail: '₹2,499 moved from "at risk" to "recovered"', icon: BarChart3, color: 'text-emerald-400' },
+  ]
+
+  useEffect(() => {
+    if (!inView) return
+    let i = 0
+    const iv = setInterval(() => {
+      setStep(i)
+      i++
+      if (i >= demoSteps.length) {
+        setTimeout(() => { i = 0; setStep(0) }, 2000)
+      }
+    }, 1500)
+    return () => clearInterval(iv)
+  }, [inView])
+
+  return (
+    <section id="demo" ref={ref} className="py-24 px-6 landing-section">
+      <div className="max-w-3xl mx-auto">
+        <h2 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight text-center">
+          Watch a failed payment become recovered
+        </h2>
+        <div className={`mt-14 transition-all duration-700 ${inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+          <div className="bg-[#0c0c0e] border border-border rounded-lg p-6">
+            <div className="space-y-0">
+              {demoSteps.map((s, i) => {
+                const Icon = s.icon
+                const isActive = i === step
+                const isPast = i < step
+                return (
+                  <div key={i} className={`flex items-center gap-4 py-2.5 transition-all duration-400 ${isActive ? 'opacity-100' : isPast ? 'opacity-50' : 'opacity-20'}`}>
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-all duration-300 ${isActive ? 'bg-secondary border border-border scale-110' : isPast ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-secondary/30 border border-border'}`}>
+                      {isPast ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <Icon className={`w-4 h-4 ${isActive ? s.color : 'text-muted-foreground'}`} />}
+                    </div>
+                    <div className="flex-1">
+                      <p className={`text-[13px] font-medium ${isActive ? 'text-foreground' : 'text-muted-foreground'}`}>{s.label}</p>
+                      {isActive && <p className="text-[11px] text-muted-foreground mt-0.5 font-mono">{s.detail}</p>}
+                    </div>
+                    {isActive && <span className="text-[10px] text-emerald-400 font-mono animate-pulse">●</span>}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 /* ─── Results / Evaluation ──────────────────────────────────────────── */
 
 function Results() {
@@ -575,7 +780,6 @@ function Results() {
   const control = useCountUp(12, 1200, inView)
   const rf = useCountUp(21, 1200, inView)
   const lift = useCountUp(75, 1200, inView)
-  const revenue = useCountUp(96, 1200, inView)
 
   return (
     <section id="results" ref={ref} className="py-24 px-6 landing-section">
@@ -597,19 +801,6 @@ function Results() {
             <p className="text-4xl font-bold text-emerald-400 font-mono mt-3">+{lift}%</p>
           </div>
         </div>
-        <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[
-            { label: 'Recovered Revenue', value: `₹${revenue},420` },
-            { label: 'Revenue At Risk', value: '₹38,520' },
-            { label: 'AI Cost', value: '₹0.02/run' },
-            { label: 'Net Recovered', value: `₹${revenue},418` },
-          ].map((m, i) => (
-            <div key={i} className="rounded-lg border border-border bg-card p-4 text-center">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{m.label}</p>
-              <p className="text-lg font-bold font-mono text-foreground mt-1">{m.value}</p>
-            </div>
-          ))}
-        </div>
         <p className="text-center text-[11px] text-muted-foreground mt-6">
           Measured using a control group and held-out recovery cases.
         </p>
@@ -618,63 +809,10 @@ function Results() {
   )
 }
 
-/* ─── Real Recovery Story ───────────────────────────────────────────── */
-
-function RealRecoveryStory() {
-  const { ref, inView } = useInView()
-  const steps = [
-    { label: '₹2,499 PAYMENT', icon: AlertTriangle, color: 'text-amber-400' },
-    { label: 'UPI TIMEOUT', icon: Clock, color: 'text-red-400' },
-    { label: 'AI DIAGNOSIS', sub: '91% CONFIDENCE', icon: Brain, color: 'text-blue-400' },
-    { label: 'POLICY ALLOWED', icon: Shield, color: 'text-emerald-400' },
-    { label: 'RECOVERY EMAIL SENT', icon: Mail, color: 'text-blue-400' },
-    { label: 'CUSTOMER RETRIES', icon: Zap, color: 'text-blue-400' },
-    { label: 'RAZORPAY PAYMENT CAPTURED', icon: CheckCircle2, color: 'text-emerald-400' },
-    { label: '₹2,499 RECOVERED', icon: CheckCircle2, color: 'text-emerald-400' },
-  ]
-
-  return (
-    <section id="real-recovery-story" ref={ref} className="py-24 px-6 landing-section">
-      <div className="max-w-3xl mx-auto">
-        <h2 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight text-center">
-          One real recovery, start to finish.
-        </h2>
-        <div className={`mt-14 transition-all duration-700 ${inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-          <div className="bg-[#0c0c0e] border border-border rounded-lg p-6">
-            <div className="space-y-0">
-              {steps.map((s, i) => {
-                const Icon = s.icon
-                const isLast = i === steps.length - 1
-                return (
-                  <div key={i} className="relative">
-                    <div className="flex items-center gap-4">
-                      <div className="flex flex-col items-center">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isLast ? 'bg-emerald-500/15 border border-emerald-500/30' : 'bg-secondary/50 border border-border'}`}>
-                          <Icon className={`w-4 h-4 ${s.color}`} />
-                        </div>
-                        {!isLast && <div className="w-px h-8 bg-border" />}
-                      </div>
-                      <div className="flex-1 pb-6">
-                        <p className={`text-[13px] font-mono font-medium ${isLast ? 'text-emerald-400 text-base font-bold' : 'text-foreground'}`}>
-                          {s.label}
-                        </p>
-                        {s.sub && <p className="text-[11px] text-muted-foreground font-mono mt-0.5">{s.sub}</p>}
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  )
-}
-
 /* ─── FAQ ───────────────────────────────────────────────────────────── */
 
 function FAQ() {
+  const { ref, inView } = useInView()
   const [open, setOpen] = useState<number | null>(null)
   const faqs = [
     { q: 'Does RecoverFlow control payments directly?', a: 'No. Recovery actions are constrained by the policy layer and payment state machine.' },
@@ -685,12 +823,12 @@ function FAQ() {
     { q: 'Can automation be stopped?', a: 'Yes. The global kill switch can block all automated recovery immediately.' },
   ]
   return (
-    <section id="faq" className="py-24 px-6 landing-section">
+    <section id="faq" ref={ref} className="py-24 px-6 landing-section">
       <div className="max-w-2xl mx-auto">
         <h2 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight text-center">
           Frequently asked questions
         </h2>
-        <div className="mt-10 space-y-1">
+        <div className={`mt-10 space-y-1 transition-all duration-700 ${inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
           {faqs.map((f, i) => (
             <div key={i} className="rounded-lg border border-border bg-card overflow-hidden">
               <button
@@ -717,9 +855,10 @@ function FAQ() {
 
 function FinalCTA() {
   const navigate = useNavigate()
+  const { ref, inView } = useInView()
   return (
-    <section className="py-24 px-6 landing-section">
-      <div className="max-w-3xl mx-auto text-center">
+    <section ref={ref} className="py-24 px-6 landing-section">
+      <div className={`max-w-3xl mx-auto text-center transition-all duration-700 ${inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
         <h2 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight">
           Turn failed payments into recovered revenue.
         </h2>
@@ -735,10 +874,10 @@ function FinalCTA() {
             <ArrowRight className="w-4 h-4" />
           </button>
           <button
-            onClick={() => window.open('https://github.com', '_blank')}
+            onClick={() => document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' })}
             className="px-7 py-3 rounded-md border border-border text-sm font-medium text-foreground hover:bg-secondary/50 transition-colors"
           >
-            View Architecture
+            View Demo
           </button>
         </div>
       </div>
@@ -774,14 +913,16 @@ export function LandingPage() {
     <div className="min-h-screen bg-background text-foreground">
       <LandingNavbar />
       <Hero />
-      <ProblemSolution />
-      <ProductShowcase />
-      <AgentTrace />
+      <TrustMetrics />
+      <TheProblem />
       <HowItWorks />
-      <Differentiation />
+      <LiveTimeline />
+      <AIInvestigation />
       <PolicyFirewall />
+      <RecoveryDashboard />
+      <Architecture />
+      <Demo />
       <Results />
-      <RealRecoveryStory />
       <FAQ />
       <FinalCTA />
       <Footer />
