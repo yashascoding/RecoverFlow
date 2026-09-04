@@ -39,7 +39,7 @@ RecoverFlow is an autonomous AI agent that monitors payment failures in real-tim
 
 <!-- TODO: Add your architecture diagram here -->
 
-<img width="1858" height="915" alt="architecture" src="https://github.com/user-attachments/assets/3dc67985-98fb-4ea2-8339-83226267a188" />
+<img src="docs/images/architecture.png" alt="RecoverFlow Architecture" width="100%" />
 
 **Tech stack:**
 - **Backend:** Python 3.12+ / FastAPI / SQLAlchemy (async) / PostgreSQL / Redis
@@ -54,6 +54,8 @@ RecoverFlow is an autonomous AI agent that monitors payment failures in real-tim
 ## AI Agent
 
 RecoverFlow uses a LangGraph-based autonomous agent with full tool access:
+
+<img src="docs/images/langgraph-pipeline.png" alt="LangGraph Pipeline" width="400" />
 
 **Agent tools:**
 - `fetch_payment` — Retrieve payment details and metadata
