@@ -10,6 +10,7 @@ const routeLabels: Record<string, string> = {
   '/agent-runs': 'Agent Runs',
   '/audit': 'Audit Log',
   '/policies': 'Policies',
+  '/evaluation': 'Evaluation',
 }
 
 export function Header() {

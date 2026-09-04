@@ -96,6 +96,7 @@ from app.api.incidents import router as incidents_router
 from app.api.alerts import router as alerts_router
 from app.api.sentinel import router as sentinel_router
 from app.api.investigations import router as investigations_router
+from app.api.evaluation import router as evaluation_router
 
 app.include_router(health_router, prefix="/api")
 app.include_router(auth_router, prefix="/api")
@@ -114,6 +115,7 @@ app.include_router(incidents_router, prefix="/api")
 app.include_router(alerts_router, prefix="/api")
 app.include_router(sentinel_router, prefix="/api")
 app.include_router(investigations_router, prefix="/api")
+app.include_router(evaluation_router, prefix="/api")
 
 
 @app.get("/")

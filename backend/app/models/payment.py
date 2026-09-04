@@ -69,6 +69,9 @@ class Payment(Base):
     original_payment_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), nullable=True
     )
+    assignment_group: Mapped[str | None] = mapped_column(
+        String(20), nullable=True, comment="control or ai"
+    )
     metadata_: Mapped[dict | None] = mapped_column(
         "metadata", JSONB, nullable=True, default=dict
     )
@@ -86,6 +89,7 @@ class Payment(Base):
         Index("ix_payments_status", "status"),
         Index("ix_payments_created_at", "created_at"),
         Index("ix_payments_customer_email", "customer_email"),
+        Index("ix_payments_assignment_group", "assignment_group"),
     )
 
     def __repr__(self) -> str:

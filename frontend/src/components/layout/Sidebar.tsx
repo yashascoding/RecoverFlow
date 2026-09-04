@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, CreditCard, AlertTriangle, RotateCcw,
-  Bot, FileText, Shield, ChevronLeft, ChevronRight, Activity, Eye, Search
+  Bot, FileText, Shield, ChevronLeft, ChevronRight, Activity, Eye, Search, BarChart3
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -17,6 +17,7 @@ const navItems = [
   { to: '/agent-runs', label: 'Agent Runs', icon: Bot },
   { to: '/audit', label: 'Audit', icon: FileText },
   { to: '/policies', label: 'Policies', icon: Shield },
+  { to: '/evaluation', label: 'Evaluation', icon: BarChart3 },
 ]
 
 export function Sidebar() {

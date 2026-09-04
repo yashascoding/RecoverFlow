@@ -295,3 +295,88 @@ export interface RecoveryStrategy {
   timeline: string
   resources_required: string[]
 }
+
+export interface RecoveryMetrics {
+  total_payments: number
+  total_failed: number
+  total_recovered: number
+  recovery_rate: number
+  recovered_revenue: number
+  revenue_at_risk: number
+}
+
+export interface EmailMetrics {
+  total_sent: number
+  total_delivered: number
+  total_opened: number
+  total_clicked: number
+  total_converted: number
+  delivery_rate: number
+  open_rate: number
+  click_rate: number
+  conversion_rate: number
+}
+
+export interface AgentMetrics {
+  total_runs: number
+  successful_runs: number
+  failed_runs: number
+  tool_errors: number
+  avg_latency_ms: number
+  p95_latency_ms: number
+  success_rate: number
+}
+
+export interface PolicyMetrics {
+  total_decisions: number
+  allowed: number
+  blocked: number
+  human_review: number
+  deferred: number
+  compliance_rate: number
+  violations: number
+}
+
+export interface CostMetrics {
+  ai_cost_usd: number
+  email_cost_usd: number
+  total_cost_usd: number
+  recovered_revenue_usd: number
+  net_recovered_revenue_usd: number
+  roi: number
+}
+
+export interface AssignmentGroupMetrics {
+  group: 'control' | 'ai'
+  payment_count: number
+  failed_count: number
+  recovered_count: number
+  recovery_rate: number
+  recovered_revenue: number
+  total_revenue: number
+}
+
+export interface LiftResult {
+  control_recovery_rate: number
+  ai_recovery_rate: number
+  lift_absolute: number
+  lift_percentage: number
+  control_payment_count: number
+  ai_payment_count: number
+  control_recovered_revenue: number
+  ai_recovered_revenue: number
+  is_statistically_significant: boolean
+}
+
+export interface EvaluationDashboardResponse {
+  recovery: RecoveryMetrics
+  email: EmailMetrics
+  agent: AgentMetrics
+  policy: PolicyMetrics
+  cost: CostMetrics
+  control_group: AssignmentGroupMetrics
+  ai_group: AssignmentGroupMetrics
+  lift: LiftResult
+  time_window_hours: number
+  generated_at: string
+}

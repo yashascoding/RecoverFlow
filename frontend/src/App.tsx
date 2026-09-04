@@ -21,6 +21,7 @@ import { FailureAnalysisPage } from '@/pages/monitoring/FailureAnalysisPage'
 import { SpikeDetectionPage } from '@/pages/monitoring/SpikeDetectionPage'
 import { SentinelDashboard } from '@/pages/sentinel/SentinelDashboard'
 import { InvestigationsPage } from '@/pages/investigations/InvestigationsPage'
+import { EvaluationPage } from '@/pages/evaluation/EvaluationPage'
 
 function App() {
   return (
@@ -65,6 +66,7 @@ function App() {
             <Route path="/monitoring/spikes" element={<SpikeDetectionPage />} />
             <Route path="/sentinel" element={<SentinelDashboard />} />
             <Route path="/investigations" element={<InvestigationsPage />} />
+            <Route path="/evaluation" element={<EvaluationPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
