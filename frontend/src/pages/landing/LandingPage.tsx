@@ -55,7 +55,7 @@ function LandingNavbar() {
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled ? 'bg-background/80 backdrop-blur-xl border-b border-border shadow-lg shadow-black/5' : 'bg-transparent'}`}>
       <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-md bg-blue-500 flex items-center justify-center text-white text-xs font-bold">RF</div>
+          <img src="/image.png" alt="RecoverFlow" className="w-7 h-7 rounded-md" />
           <span className="text-sm font-semibold text-foreground">RecoverFlow</span>
         </div>
         <div className="hidden md:flex items-center gap-6">
@@ -170,18 +170,14 @@ function Hero() {
         preload="metadata"
         className="absolute inset-0 h-full w-full object-cover opacity-[0.35]"
       >
-        <source src="/videos/payment.mp4" type="video/mp4" />
+        <source src="/videos/video.mp4" type="video/mp4" />
       </video>
       <div className="absolute inset-0 bg-black/20" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(37,99,235,0.18),transparent_60%)]" />
       <div className="relative z-10 max-w-6xl mx-auto">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border bg-secondary/30 text-[11px] text-muted-foreground mb-6 backdrop-blur-sm">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              Autonomous payment recovery
-            </div>
-            <h1 className="text-4xl md:text-5xl font-bold text-foreground leading-tight tracking-tight">
+            <h1 className="text-5xl md:text-6xl font-bold text-foreground leading-tight tracking-tight">
               <Typewriter />
             </h1>
             <p className="mt-5 text-lg text-muted-foreground leading-relaxed max-w-xl">
@@ -892,7 +888,7 @@ function Footer() {
     <footer className="border-t border-border py-10 px-6">
       <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded bg-blue-500 flex items-center justify-center text-white text-[10px] font-bold">RF</div>
+          <img src="/image.png" alt="RecoverFlow" className="w-6 h-6 rounded" />
           <span className="text-[13px] font-medium text-foreground">RecoverFlow</span>
         </div>
         <div className="flex items-center gap-6">

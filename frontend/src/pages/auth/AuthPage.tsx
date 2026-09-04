@@ -43,14 +43,14 @@ export function AuthPage() {
       <div className="hidden lg:flex flex-1 bg-card border-r border-border flex-col justify-between p-12 relative overflow-hidden">
         <div className="relative z-10">
           <Link to="/" className="flex items-center gap-2 mb-16">
-            <div className="w-8 h-8 rounded-md bg-recovery flex items-center justify-center text-white text-sm font-bold">RF</div>
+            <img src="/image.png" alt="RecoverFlow" className="w-8 h-8 rounded-md" />
             <span className="text-base font-semibold text-foreground">RecoverFlow</span>
           </Link>
 
-          <h1 className="text-3xl font-bold text-foreground leading-tight tracking-tight max-w-md">
+          <h1 className="text-4xl font-bold text-foreground leading-tight tracking-tight max-w-md">
             Turn failed payments into recovered revenue.
           </h1>
-          <p className="mt-4 text-muted-foreground max-w-md leading-relaxed">
+          <p className="mt-4 text-muted-foreground max-w-md leading-relaxed text-lg">
             Autonomous AI payment recovery for Indian D2C merchants. Detect, investigate, recover, and measure.
           </p>
 
@@ -63,39 +63,12 @@ export function AuthPage() {
               { icon: CheckCircle2, text: 'Measure recovered revenue' },
             ].map((item, i) => (
               <div key={i} className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-md bg-blue-500/10 flex items-center justify-center shrink-0">
-                  <item.icon className="w-4 h-4 text-blue-400" />
+                <div className="w-9 h-9 rounded-md bg-blue-500/10 flex items-center justify-center shrink-0">
+                  <item.icon className="w-4.5 h-4.5 text-blue-400" />
                 </div>
-                <span className="text-[13px] text-muted-foreground">{item.text}</span>
+                <span className="text-[15px] text-muted-foreground">{item.text}</span>
               </div>
             ))}
-          </div>
-        </div>
-
-        <div className="relative z-10">
-          <div className="bg-secondary/30 border border-border rounded-lg p-4 max-w-sm">
-            <div className="flex items-center gap-3 mb-2">
-              <Zap className="w-4 h-4 text-amber-400" />
-              <span className="text-[12px] font-medium text-foreground">Pipeline Active</span>
-            </div>
-            <div className="space-y-1.5 font-mono text-[11px]">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                <span className="text-muted-foreground">Payment failure detected</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                <span className="text-muted-foreground">AI investigation complete</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                <span className="text-muted-foreground">Recovery email sent</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full border border-blue-400/50" />
-                <span className="text-blue-400">Awaiting customer action...</span>
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -105,7 +78,7 @@ export function AuthPage() {
         <div className="w-full max-w-sm">
           <div className="lg:hidden flex items-center gap-2 mb-8">
             <Link to="/" className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-md bg-recovery flex items-center justify-center text-white text-xs font-bold">RF</div>
+              <img src="/image.png" alt="RecoverFlow" className="w-7 h-7 rounded-md" />
               <span className="text-sm font-semibold text-foreground">RecoverFlow</span>
             </Link>
           </div>

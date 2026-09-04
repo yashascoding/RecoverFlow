@@ -33,9 +33,7 @@ export function Sidebar() {
     >
       {/* Logo */}
       <div className="flex items-center gap-2.5 px-4 h-14 border-b border-border shrink-0">
-        <div className="w-7 h-7 rounded-md bg-recovery flex items-center justify-center text-white text-[11px] font-bold shrink-0">
-          RF
-        </div>
+        <img src="/image.png" alt="RecoverFlow" className="w-7 h-7 rounded-md shrink-0" />
         {!collapsed && (
           <span className="text-[13px] font-semibold text-foreground tracking-tight">
             RecoverFlow
