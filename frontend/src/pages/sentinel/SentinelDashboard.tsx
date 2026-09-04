@@ -11,6 +11,7 @@ import { getAlerts } from '@/api/alerts'
 import { getSentinelStatus, runSentinelCheck } from '@/api/sentinel'
 import { getTransactionSummary, getFailureSummary } from '@/api/monitoring'
 import { formatCurrency, formatRelativeTime } from '@/lib/utils'
+import type { Incident } from '@/types'
 import {
   AlertTriangle,
   Activity,
@@ -47,16 +48,16 @@ export function SentinelDashboard() {
     }
   }
 
-  const incidentColumns: Column<{ id: string; title: string; severity: string; status: string; revenue_at_risk: number; created_at: string }>[] = [
+  const incidentColumns: Column<Incident>[] = [
     {
       key: 'id',
       header: 'ID',
       render: (row) => <span className="font-mono text-[12px] text-muted-foreground">{row.id.slice(0, 8)}</span>,
     },
     {
-      key: 'title',
-      header: 'Title',
-      render: (row) => <span className="font-medium text-[13px]">{row.title}</span>,
+      key: 'failure_reason',
+      header: 'Reason',
+      render: (row) => <span className="font-medium text-[13px]">{row.failure_reason?.slice(0, 40) || '—'}</span>,
     },
     {
       key: 'severity',
@@ -71,12 +72,12 @@ export function SentinelDashboard() {
       render: (row) => <StatusBadge status={row.status} />,
     },
     {
-      key: 'revenue_at_risk',
-      header: 'Revenue at Risk',
+      key: 'amount',
+      header: 'Amount',
       sortable: true,
       render: (row) => (
         <span className="text-destructive font-mono text-[13px]">
-          {formatCurrency(row.revenue_at_risk)}
+          {formatCurrency(row.amount)}
         </span>
       ),
     },

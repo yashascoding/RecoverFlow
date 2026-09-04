@@ -1,13 +1,16 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { login, register } from '@/api/auth'
 import { ArrowRight, Eye, Brain, CheckCircle2, Shield, Zap, Mail } from 'lucide-react'
 
 export function AuthPage() {
   const navigate = useNavigate()
-  const { setAuth } = useAuth()
-  const [mode, setMode] = useState<'login' | 'register'>('login')
+  const location = useLocation()
+  const { setAuth, loading: authLoading } = useAuth()
+  const [mode, setMode] = useState<'login' | 'register'>(
+    location.pathname === '/register' ? 'register' : 'login'
+  )
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')

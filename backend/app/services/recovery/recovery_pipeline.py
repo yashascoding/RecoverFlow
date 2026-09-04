@@ -302,7 +302,14 @@ class RecoveryPipeline:
         )
 
         # 6. Send recovery email
-        email_msg = await self._send_recovery_email(payment, attempt)
+        try:
+            email_msg = await self._send_recovery_email(payment, attempt)
+        except Exception as e:
+            logger.error(
+                "pipeline_email_send_failed",
+                extra={"payment_id": str(payment.id), "error": str(e)},
+            )
+            email_msg = None
 
         # 7. Audit log
         audit_payload = {
@@ -349,10 +356,26 @@ class RecoveryPipeline:
         )
 
     async def _send_recovery_email(self, payment: Payment, attempt) -> object | None:
-        """Send recovery email via Resend. Returns EmailMessage or None."""
+        """Send recovery email via Resend with a real Razorpay payment link."""
         from app.models.email_message import EmailMessage, EmailDirection, EmailStatus
+        from app.services.payments.razorpay_service import RazorpayService
 
-        retry_link = f"https://pay.recoverflow.in/retry/{attempt.id}"
+        razorpay_svc = RazorpayService(db=self.db)
+        retry_link = f"https://pay.recoverflow.in/retry/{attempt.id}"  # fallback
+
+        try:
+            pl_result = await razorpay_svc.create_payment_link(
+                customer_email=payment.customer_email,
+                amount=payment.amount,
+                description=f"Recovery attempt for order {payment.razorpay_order_id[:20]}",
+            )
+            if pl_result.get("short_url"):
+                retry_link = pl_result["short_url"]
+                attempt.recovery_link = retry_link
+                await self.db.flush()
+        except Exception as e:
+            logger.warning("pipeline_razorpay_link_fallback", extra={"error": str(e), "payment_id": str(payment.id)})
+
         template_name = "payment_failure"
 
         rendered = await self.template_svc.render(

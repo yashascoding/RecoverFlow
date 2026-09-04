@@ -158,11 +158,30 @@ function Typewriter() {
 function Hero() {
   const navigate = useNavigate()
   return (
-    <section className="relative pt-32 pb-20 px-6 landing-gradient">
-      <div className="max-w-6xl mx-auto">
+    <section className="relative min-h-[650px] overflow-hidden pt-32 pb-20 px-6">
+      {/* Background video */}
+      <video
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="metadata"
+        className="absolute inset-0 h-full w-full object-cover opacity-[0.35]"
+      >
+        <source src="/videos/payment.mp4" type="video/mp4" />
+      </video>
+
+      {/* Darkening layer */}
+      <div className="absolute inset-0 bg-black/20" />
+
+      {/* Blue atmospheric glow */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(37,99,235,0.18),transparent_60%)]" />
+
+      {/* Existing UI */}
+      <div className="relative z-10 max-w-6xl mx-auto">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border bg-secondary/30 text-[11px] text-muted-foreground mb-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border bg-secondary/30 text-[11px] text-muted-foreground mb-6 backdrop-blur-sm">
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
               Autonomous payment recovery
             </div>
@@ -182,7 +201,7 @@ function Hero() {
               </button>
               <button
                 onClick={() => document.getElementById('real-recovery-story')?.scrollIntoView({ behavior: 'smooth' })}
-                className="px-6 py-3 rounded-md border border-border text-sm font-medium text-foreground hover:bg-secondary/50 transition-colors inline-flex items-center gap-2"
+                className="px-6 py-3 rounded-md border border-border text-sm font-medium text-foreground hover:bg-secondary/50 transition-colors inline-flex items-center gap-2 backdrop-blur-sm"
               >
                 <Play className="w-3.5 h-3.5" />
                 Watch Recovery Flow

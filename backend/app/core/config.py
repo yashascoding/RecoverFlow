@@ -59,6 +59,10 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
 
+    # AI / LLM
+    GROQ_API_KEY: str = ""
+    OPENAI_API_KEY: str = ""
+
     # Logging
     LOG_LEVEL: str = "INFO"
 

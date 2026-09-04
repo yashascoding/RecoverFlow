@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils'
 import type { PaymentStatus, IncidentStatus, RecoveryAttemptStatus, AgentRunStatus, AuditResult, Severity } from '@/types'
 
-type StatusType = PaymentStatus | IncidentStatus | RecoveryAttemptStatus | AgentRunStatus | AuditResult | Severity
+type StatusType = PaymentStatus | IncidentStatus | RecoveryAttemptStatus | AgentRunStatus | AuditResult | Severity | string
 
 const statusStyles: Record<string, string> = {
   captured: 'bg-success/10 text-success border-success/20',

@@ -3,13 +3,16 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timedelta, timezone
 from math import ceil
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.auth import get_current_user
 from app.db.database import get_db
 from app.models.payment import Payment
+from app.models.user import User
 from app.schemas.payment import (
     PaymentCreate,
     PaymentListResponse,
@@ -29,6 +32,7 @@ router = APIRouter(prefix="/payments", tags=["payments"])
 @router.post("/create", response_model=PaymentResponse, status_code=status.HTTP_201_CREATED)
 async def create_payment(
     body: PaymentCreate,
+    current_user: Annotated[User, Depends(get_current_user)],
     db: AsyncSession = Depends(get_db),
 ) -> PaymentResponse:
     try:
@@ -50,6 +54,7 @@ async def create_payment(
         currency=body.currency,
         customer_email=body.customer_email,
         customer_phone=body.customer_phone,
+        user_id=current_user.id,
     )
 
     return PaymentResponse.model_validate(payment)
@@ -57,15 +62,16 @@ async def create_payment(
 
 @router.get("/stats/overview")
 async def get_overview_stats(
+    current_user: Annotated[User, Depends(get_current_user)],
     db: AsyncSession = Depends(get_db),
 ):
     thirty_days_ago = datetime.now(timezone.utc) - timedelta(days=30)
     sixty_days_ago = datetime.now(timezone.utc) - timedelta(days=60)
 
-    all_query = select(Payment)
-    current_query = select(Payment).where(Payment.created_at >= thirty_days_ago)
+    all_query = select(Payment).where(Payment.user_id == current_user.id)
+    current_query = select(Payment).where(Payment.user_id == current_user.id, Payment.created_at >= thirty_days_ago)
     previous_query = select(Payment).where(
-        Payment.created_at >= sixty_days_ago, Payment.created_at < thirty_days_ago
+        Payment.user_id == current_user.id, Payment.created_at >= sixty_days_ago, Payment.created_at < thirty_days_ago
     )
 
     all_result = await db.execute(all_query)
@@ -112,10 +118,11 @@ async def get_overview_stats(
 
 @router.get("/recent-activity")
 async def get_recent_activity(
+    current_user: Annotated[User, Depends(get_current_user)],
     limit: int = Query(10, ge=1, le=50),
     db: AsyncSession = Depends(get_db),
 ):
-    query = select(Payment).order_by(Payment.created_at.desc()).limit(limit)
+    query = select(Payment).where(Payment.user_id == current_user.id).order_by(Payment.created_at.desc()).limit(limit)
     result = await db.execute(query)
     payments = result.scalars().all()
     return [
@@ -133,10 +140,11 @@ async def get_recent_activity(
 @router.get("/{payment_id}", response_model=PaymentResponse)
 async def get_payment(
     payment_id: uuid.UUID,
+    current_user: Annotated[User, Depends(get_current_user)],
     db: AsyncSession = Depends(get_db),
 ) -> PaymentResponse:
     svc = PaymentService(db)
-    payment = await svc.get_payment_by_id(payment_id)
+    payment = await svc.get_payment_by_id(payment_id, user_id=current_user.id)
     if not payment:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -147,6 +155,7 @@ async def get_payment(
 
 @router.get("/", response_model=PaymentListResponse)
 async def list_payments(
+    current_user: Annotated[User, Depends(get_current_user)],
     status_filter: str | None = Query(None, alias="status"),
     customer_email: str | None = None,
     page: int = Query(1, ge=1),
@@ -167,7 +176,7 @@ async def list_payments(
 
     svc = PaymentService(db)
     items, total = await svc.list_payments(
-        status=ps, customer_email=customer_email, page=page, page_size=page_size
+        status=ps, customer_email=customer_email, user_id=current_user.id, page=page, page_size=page_size
     )
 
     return PaymentListResponse(

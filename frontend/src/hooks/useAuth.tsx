@@ -1,5 +1,6 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
 import type { AuthUser } from '@/api/auth'
+import { getMe } from '@/api/auth'
 
 interface AuthContextType {
   user: AuthUser | null
@@ -19,6 +20,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null)
   const [token, setToken] = useState<string | null>(getStoredToken)
   const [loading, setLoading] = useState(() => !!getStoredToken())
+
+  useEffect(() => {
+    const storedToken = localStorage.getItem('rf_token')
+    if (!storedToken) {
+      setLoading(false)
+      return
+    }
+    getMe()
+      .then((u) => {
+        setUser(u)
+        setToken(storedToken)
+        setLoading(false)
+      })
+      .catch(() => {
+        localStorage.removeItem('rf_token')
+        setToken(null)
+        setUser(null)
+        setLoading(false)
+      })
+  }, [])
 
   const setAuth = useCallback((newToken: string, newUser: AuthUser) => {
     localStorage.setItem('rf_token', newToken)

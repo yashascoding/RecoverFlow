@@ -125,7 +125,7 @@ export function PaymentsPage() {
           columns={columns}
           data={filtered}
           pageSize={10}
-          onRowClick={(row) => navigate(`/payments/${row.razorpay_order_id}`)}
+          onRowClick={(row) => navigate(`/payments/${row.id}`)}
         />
       )}
     </PageContainer>

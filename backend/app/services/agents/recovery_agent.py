@@ -372,13 +372,59 @@ class RecoveryAgent:
     # ── default LLM (stub) ───────────────────────────────────────────────
 
     async def _default_llm_call(self, prompt: str) -> dict:
-        return {
-            "diagnosis": "Automated diagnosis based on failure analysis",
-            "confidence": 0.5,
-            "recommended_action": "EMAIL_PAYMENT_LINK",
-            "reason": "Default recovery action",
-            "risk_level": "LOW",
-        }
+        """Call Groq API for real LLM diagnosis."""
+        import httpx
+        from app.core.config import get_settings
+        settings = get_settings()
+
+        api_key = getattr(settings, "GROQ_API_KEY", "")
+        if not api_key:
+            return {
+                "diagnosis": "Automated diagnosis based on failure analysis",
+                "confidence": 0.5,
+                "recommended_action": "EMAIL_PAYMENT_LINK",
+                "reason": "Default recovery action (no LLM configured)",
+                "risk_level": "LOW",
+            }
+
+        try:
+            async with httpx.AsyncClient(timeout=25.0) as client:
+                resp = await client.post(
+                    "https://api.groq.com/openai/v1/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {api_key}",
+                        "Content-Type": "application/json",
+                    },
+                    json={
+                        "model": "llama-3.1-8b-instant",
+                        "messages": [
+                            {"role": "system", "content": "You are a payment recovery AI. Analyze the payment failure context and return a JSON object with: diagnosis (string), confidence (0.0-1.0), recommended_action (EMAIL_PAYMENT_LINK | RETRY_PAYMENT | SEND_SMS | ESCALATE_TO_HUMAN | BLOCK_RECOVERY), reason (string), risk_level (LOW | MEDIUM | HIGH). Return ONLY valid JSON, no markdown."},
+                            {"role": "user", "content": prompt},
+                        ],
+                        "temperature": 0.3,
+                        "max_tokens": 512,
+                    },
+                )
+                resp.raise_for_status()
+                data = resp.json()
+                content = data["choices"][0]["message"]["content"]
+                import json
+                # Strip markdown code fences if present
+                content = content.strip()
+                if content.startswith("```"):
+                    content = content.split("\n", 1)[1]
+                if content.endswith("```"):
+                    content = content.rsplit("```", 1)[0]
+                return json.loads(content.strip())
+        except Exception as e:
+            logger.warning("groq_llm_call_failed", extra={"error": str(e)})
+            return {
+                "diagnosis": "LLM call failed, using fallback diagnosis",
+                "confidence": 0.3,
+                "recommended_action": "EMAIL_PAYMENT_LINK",
+                "reason": f"LLM unavailable: {e}",
+                "risk_level": "LOW",
+            }
 
     # ── main entry point ─────────────────────────────────────────────────
 
