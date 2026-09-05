@@ -63,6 +63,9 @@ class Settings(BaseSettings):
     GROQ_API_KEY: str = ""
     OPENAI_API_KEY: str = ""
 
+    # Webhook base URL (e.g. Cloudflare tunnel URL — changes on restart)
+    WEBHOOK_BASE_URL: str = ""
+
     # Logging
     LOG_LEVEL: str = "INFO"
 

@@ -63,3 +63,16 @@ export async function getPayment(id: string): Promise<Payment> {
     updated_at: p.updated_at,
   }
 }
+
+export interface RecoveryCheckResult {
+  payment_id: string
+  checked_at: string
+  payment_link_status?: string
+  new_status?: string
+  message: string
+  error?: string
+}
+
+export async function checkRecoveryStatus(paymentId: string): Promise<RecoveryCheckResult> {
+  return api.post<RecoveryCheckResult>(`/api/payments/${paymentId}/check-recovery`)
+}

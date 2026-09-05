@@ -213,3 +213,62 @@ async def update_payment_status(
         )
     await db.commit()
     return PaymentResponse.model_validate(payment)
+
+
+@router.post("/{payment_id}/check-recovery")
+async def check_recovery_status(
+    payment_id: uuid.UUID,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: AsyncSession = Depends(get_db),
+):
+    """Manually check Razorpay for payment status — fallback when webhooks fail."""
+    from app.core.logging import get_logger
+    from app.models.payment import PaymentStatus
+
+    logger = get_logger(__name__)
+    svc = PaymentService(db)
+    payment = await svc.get_payment_by_id(payment_id, user_id=current_user.id)
+    if not payment:
+        raise HTTPException(status_code=404, detail="Payment not found")
+
+    if payment.status not in ("recovery_pending", "failed"):
+        return {"status": payment.status, "message": "Payment is not in a recoverable state"}
+
+    # Try to find the payment_link_id from metadata
+    pl_id = (payment.metadata_ or {}).get("razorpay_payment_link_id")
+
+    result = {"payment_id": str(payment.id), "checked_at": datetime.now(timezone.utc).isoformat()}
+
+    if pl_id:
+        try:
+            pl_details = razorpay_service.client.payment_link.fetch(pl_id)
+            pl_status = pl_details.get("status")
+            result["payment_link_status"] = pl_status
+            logger.info("payment_link_fetched", extra={"payment_link_id": pl_id, "status": pl_status})
+
+            if pl_status == "paid":
+                # Find the payment_id from the payment link
+                payments_list = pl_details.get("payments", [])
+                if payments_list:
+                    razorpay_pay_id = payments_list[0].get("id")
+                    if razorpay_pay_id:
+                        payment.razorpay_payment_id = razorpay_pay_id
+
+                transition_svc = PaymentTransitionService(db)
+                payment = await transition_svc.record_recovery_success(payment.razorpay_order_id)
+                await db.commit()
+                result["new_status"] = "recovered"
+                result["message"] = "Payment recovered successfully!"
+                logger.info("manual_recovery_confirmed", extra={"payment_id": str(payment.id), "payment_link_id": pl_id})
+            else:
+                result["new_status"] = payment.status
+                result["message"] = f"Payment link status: {pl_status}"
+        except Exception as e:
+            logger.warning("payment_link_fetch_failed", extra={"payment_link_id": pl_id, "error": str(e)})
+            result["error"] = str(e)
+            result["message"] = "Could not fetch payment link status from Razorpay"
+    else:
+        result["message"] = "No payment link ID found in metadata — cannot check Razorpay status"
+        result["new_status"] = payment.status
+
+    return result

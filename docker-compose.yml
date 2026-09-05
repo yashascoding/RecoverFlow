@@ -51,6 +51,7 @@ services:
       - TEST_EMAIL=${TEST_EMAIL}
       - GROQ_API_KEY=${GROQ_API_KEY}
       - JWT_SECRET_KEY=${JWT_SECRET_KEY:-dev-jwt-secret-key}
+      - WEBHOOK_BASE_URL=${WEBHOOK_BASE_URL}
     volumes:
       - ./backend:/app
     depends_on:

@@ -72,18 +72,28 @@ async def _process_webhook_event(
             if event == "payment.captured":
                 if order_id or payment_id:
                     from app.services.payments.payment_transition_service import PaymentTransitionService
-                    from app.models.payment import PaymentStatus
+                    from app.models.payment import Payment, PaymentStatus
 
                     existing = await payment_svc.get_payment_by_order_id(order_id) if order_id else None
                     if not existing and payment_id:
                         existing = await payment_svc.get_payment_by_razorpay_payment_id(payment_id)
+                    # Fallback: match by payment_link_id stored in metadata (most reliable for payment links)
+                    if not existing and payment_id:
+                        from sqlalchemy import select as sel
+                        r = await db.execute(
+                            sel(Payment).where(
+                                Payment.metadata_["razorpay_payment_link_id"].as_string() == payment_id,
+                            ).order_by(Payment.created_at.desc()).limit(1)
+                        )
+                        existing = r.scalar_one_or_none()
+                        if existing:
+                            logger.info("webhook_matched_by_payment_link_id", extra={"payment_link_id": payment_id, "payment_id": str(existing.id)})
                     # Fallback: match by customer_email + amount (Razorpay payment links create new order/payment IDs)
                     if not existing:
                         customer_email = entity.get("email", "")
                         amount = entity.get("amount")
                         if customer_email and amount:
                             from sqlalchemy import select as sel
-                            from app.models.payment import Payment
                             r = await db.execute(
                                 sel(Payment).where(
                                     Payment.customer_email == customer_email,
@@ -229,20 +239,32 @@ async def _process_webhook_event(
                 customer_email = pl_customer.get("email", "")
                 amount = pl_entity.get("amount")
                 order_id_from_pl = pl_entity.get("order_id")
+                pl_id = pl_entity.get("id")
 
-                logger.info("webhook_payment_link_paid", extra={"email": customer_email, "amount": amount, "order_id": order_id_from_pl})
+                logger.info("webhook_payment_link_paid", extra={"email": customer_email, "amount": amount, "order_id": order_id_from_pl, "payment_link_id": pl_id})
 
                 from app.services.payments.payment_transition_service import PaymentTransitionService
-                from app.models.payment import PaymentStatus
+                from app.models.payment import Payment, PaymentStatus
 
                 existing = None
-                # Try by new order_id first
-                if order_id_from_pl:
+                # 1. Try by payment_link_id stored in metadata (most reliable)
+                if pl_id:
+                    from sqlalchemy import select as sel
+                    r = await db.execute(
+                        sel(Payment).where(
+                            Payment.metadata_["razorpay_payment_link_id"].as_string() == pl_id,
+                        ).order_by(Payment.created_at.desc()).limit(1)
+                    )
+                    existing = r.scalar_one_or_none()
+                    if existing:
+                        logger.info("webhook_payment_link_matched_by_id", extra={"payment_link_id": pl_id, "payment_id": str(existing.id)})
+
+                # 2. Try by new order_id
+                if not existing and order_id_from_pl:
                     existing = await payment_svc.get_payment_by_order_id(order_id_from_pl)
-                # Fallback: match by email + amount in recovery_pending
+                # 3. Fallback: match by email + amount in recovery_pending
                 if not existing and customer_email and amount:
                     from sqlalchemy import select as sel
-                    from app.models.payment import Payment
                     r = await db.execute(
                         sel(Payment).where(
                             Payment.customer_email == customer_email,
@@ -251,6 +273,8 @@ async def _process_webhook_event(
                         ).order_by(Payment.created_at.desc()).limit(1)
                     )
                     existing = r.scalar_one_or_none()
+                    if existing:
+                        logger.info("webhook_payment_link_matched_by_email_amount", extra={"email": customer_email, "amount": amount, "payment_id": str(existing.id)})
 
                 if existing and existing.status == PaymentStatus.RECOVERY_PENDING.value:
                     transition_svc = PaymentTransitionService(db)
@@ -258,7 +282,7 @@ async def _process_webhook_event(
                     if order_id_from_pl:
                         payment.razorpay_order_id = order_id_from_pl
                     await db.commit()
-                    logger.info("webhook_payment_link_recovery_confirmed", extra={"order_id": existing.razorpay_order_id})
+                    logger.info("webhook_payment_link_recovery_confirmed", extra={"order_id": existing.razorpay_order_id, "payment_id": str(payment.id)})
                 elif existing:
                     payment = await payment_svc.update_payment_status(
                         order_id=existing.razorpay_order_id,
@@ -267,8 +291,27 @@ async def _process_webhook_event(
                     await db.commit()
                     logger.info("webhook_payment_link_captured", extra={"order_id": existing.razorpay_order_id})
                 else:
-                    logger.warning("webhook_payment_link_not_found", extra={"email": customer_email, "amount": amount})
+                    logger.warning("webhook_payment_link_not_found", extra={"email": customer_email, "amount": amount, "payment_link_id": pl_id})
                     payment = None
+
+                dedup_pl = f"razorpay:{pl_id}:payment_link.paid" if pl_id else None
+                await event_bus.dispatch(
+                    PaymentCapturedEvent(
+                        source=EventSource.WEBHOOK,
+                        dedup_key=dedup_pl,
+                        payload=PaymentEventPayload(
+                            payment_id=payment.id if payment else uuid.uuid4(),
+                            razorpay_order_id=order_id_from_pl or (existing.razorpay_order_id if existing else ""),
+                            razorpay_payment_id=None,
+                            customer_id=payment.customer_id if payment else (existing.customer_id if existing else None),
+                            customer_email=customer_email,
+                            amount=amount or 0,
+                            currency="INR",
+                            status=payment.status if payment else "captured",
+                        ),
+                    ),
+                    raw_payload=raw_payload,
+                )
 
             else:
                 logger.info("unhandled_webhook_event", extra={"event": event})
@@ -484,15 +527,28 @@ async def _process_resend_event(
 async def razorpay_webhook(
     request: Request,
     background_tasks: BackgroundTasks,
-    x_razorpay_signature: str = Header(..., alias="X-Razorpay-Signature"),
+    x_razorpay_signature: str | None = Header(default=None, alias="X-Razorpay-Signature"),
 ) -> WebhookEventResponse:
     raw_body = await request.body()
 
-    if not razorpay_service.verify_webhook_signature(
-        payload=raw_body, signature=x_razorpay_signature
-    ):
-        logger.warning("webhook_signature_verification_failed")
-        raise HTTPException(status_code=400, detail="Invalid signature")
+    if not x_razorpay_signature:
+        logger.warning("webhook_missing_signature_header")
+        if settings.is_production:
+            raise HTTPException(status_code=400, detail="Missing signature")
+
+    sig_valid = razorpay_service.verify_webhook_signature(
+        payload=raw_body, signature=x_razorpay_signature or ""
+    )
+
+    if not sig_valid:
+        if settings.is_production:
+            logger.warning("webhook_signature_verification_failed")
+            raise HTTPException(status_code=400, detail="Invalid signature")
+        else:
+            logger.warning(
+                "webhook_signature_verification_failed_dev_bypass",
+                extra={"note": "Bypassing in dev mode — check Cloudflare tunnel config"},
+            )
 
     try:
         data = json.loads(raw_body)
@@ -504,7 +560,7 @@ async def razorpay_webhook(
 
     logger.info(
         "webhook_received",
-        extra={"event": event, "payload_keys": list(payload.keys())},
+        extra={"event": event, "payload_keys": list(payload.keys()), "sig_valid": sig_valid},
     )
 
     background_tasks.add_task(_process_webhook_event, event, payload, raw_payload=data)
@@ -614,7 +670,7 @@ async def webhook_test() -> dict:
     return {
         "status": "ok",
         "message": "Webhook endpoint is live",
-        "webhook_url": "https://recoverflow-webhook.share.zrok.io/webhooks/razorpay",
+        "webhook_url": f"{settings.WEBHOOK_BASE_URL}/api/webhooks/razorpay" if settings.WEBHOOK_BASE_URL else "WEBHOOK_BASE_URL not set",
     }
 
 

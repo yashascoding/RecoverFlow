@@ -1,9 +1,10 @@
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, ExternalLink } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react'
+import { ArrowLeft, ExternalLink, RefreshCw } from 'lucide-react'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { StatusBadge } from '@/components/dashboard/StatusBadge'
 import { useApi } from '@/hooks/useApi'
-import { getPayment } from '@/api/payments'
+import { getPayment, checkRecoveryStatus } from '@/api/payments'
 import { formatCurrency, formatDateTime } from '@/lib/utils'
 
 const lifecycleSteps = [
@@ -12,7 +13,34 @@ const lifecycleSteps = [
 
 export function PaymentDetailPage() {
   const { id } = useParams<{ id: string }>()
-  const { data: payment, loading } = useApi(() => getPayment(id!), [id])
+  const { data: payment, loading, refetch } = useApi(() => getPayment(id!), [id])
+  const [checking, setChecking] = useState(false)
+  const [checkMessage, setCheckMessage] = useState<string | null>(null)
+
+  const handleCheckRecovery = useCallback(async () => {
+    if (!id || checking) return
+    setChecking(true)
+    setCheckMessage(null)
+    try {
+      const result = await checkRecoveryStatus(id)
+      setCheckMessage(result.message)
+      if (result.new_status === 'recovered') {
+        refetch()
+      }
+    } catch (err) {
+      setCheckMessage(err instanceof Error ? err.message : 'Failed to check status')
+    } finally {
+      setChecking(false)
+    }
+  }, [id, checking, refetch])
+
+  useEffect(() => {
+    if (!payment || payment.status !== 'recovery_pending') return
+    const interval = setInterval(() => {
+      refetch()
+    }, 10000)
+    return () => clearInterval(interval)
+  }, [payment?.status, refetch])
 
   if (loading) {
     return (
@@ -127,6 +155,25 @@ export function PaymentDetailPage() {
           </div>
         ) : (
           <p className="text-[13px] text-muted-foreground">No recovery attempts</p>
+        )}
+
+        {(payment.status === 'recovery_pending' || payment.status === 'failed') && (
+          <div className="mt-3 pt-3 border-t border-border">
+            <button
+              onClick={handleCheckRecovery}
+              disabled={checking}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-recovery text-white text-[13px] font-medium hover:bg-recovery/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${checking ? 'animate-spin' : ''}`} />
+              {checking ? 'Checking...' : 'Check Payment Status'}
+            </button>
+            {checkMessage && (
+              <p className="text-[13px] text-muted-foreground mt-2">{checkMessage}</p>
+            )}
+            {payment.status === 'recovery_pending' && (
+              <p className="text-[11px] text-muted-foreground mt-1">Auto-refreshing every 10s while pending</p>
+            )}
+          </div>
         )}
       </div>
     </PageContainer>

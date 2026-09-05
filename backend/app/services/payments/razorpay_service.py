@@ -34,7 +34,7 @@ class RazorpayService:
                 "currency": currency,
                 "description": description,
                 "customer": {"email": customer_email},
-                "notify": {"email": True},
+                "notify": {"email": False},
                 "reminder_enable": True,
             }
             response = self.client.payment_link.create(payload)
@@ -64,7 +64,18 @@ class RazorpayService:
                 payload,
                 hashlib.sha256,
             ).hexdigest()
-            return hmac.compare_digest(expected, signature)
+            result = hmac.compare_digest(expected, signature)
+            if not result:
+                logger.warning(
+                    "webhook_signature_mismatch",
+                    extra={
+                        "received_sig_length": len(signature) if signature else 0,
+                        "expected_sig_length": len(expected),
+                        "secret_length": len(secret),
+                        "payload_length": len(payload),
+                    },
+                )
+            return result
         except Exception as e:
             logger.error("webhook_verification_error", extra={"error": str(e)})
             return False
