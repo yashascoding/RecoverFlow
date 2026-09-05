@@ -1,9 +1,17 @@
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, CheckCircle, XCircle, Clock } from 'lucide-react'
+import { ArrowLeft, CheckCircle, XCircle, Clock, Wrench } from 'lucide-react'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { useApi } from '@/hooks/useApi'
 import { getAgentRun } from '@/api/agentRuns'
 import { useState } from 'react'
+
+interface ToolCall {
+  tool_name: string
+  latency_ms: number
+  result?: Record<string, unknown>
+  error?: string | null
+  arguments?: Record<string, unknown>
+}
 
 export function AgentRunDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -63,10 +71,13 @@ export function AgentRunDetailPage() {
           <div className="absolute left-[11px] top-0 bottom-0 w-px bg-border" />
 
           <div className="space-y-1">
-            {run.stages.map((stage) => {
+            {run.stages.map((stage, idx) => {
               const isExpanded = expandedStage === stage.name
+              const toolCalls = (stage.output as { tool_calls?: ToolCall[] })?.tool_calls
+                ?? (stage.input as { tool_calls?: ToolCall[] })?.tool_calls
+                ?? []
               return (
-                <div key={stage.name}>
+                <div key={`${stage.name}-${idx}`}>
                   <button
                     onClick={() => setExpandedStage(isExpanded ? null : stage.name)}
                     className="flex items-center gap-3 w-full text-left group"
@@ -82,8 +93,14 @@ export function AgentRunDetailPage() {
                     </div>
                     <div className="flex-1 py-2">
                       <div className="flex items-center gap-2">
-                        <span className="text-[13px] font-semibold text-foreground">{stage.name}</span>
+                        <span className="text-[13px] font-semibold text-foreground capitalize">{stage.name}</span>
                         <span className="text-[10px] text-muted-foreground">{stage.duration_ms}ms</span>
+                        {toolCalls.length > 0 && (
+                          <span className="text-[10px] text-recovery flex items-center gap-0.5">
+                            <Wrench className="w-2.5 h-2.5" />
+                            {toolCalls.length} tool{toolCalls.length > 1 ? 's' : ''}
+                          </span>
+                        )}
                       </div>
                     </div>
                     <span className="text-[11px] text-muted-foreground group-hover:text-foreground transition-colors">
@@ -92,16 +109,35 @@ export function AgentRunDetailPage() {
                   </button>
 
                   {isExpanded && (
-                    <div className="ml-9 mb-3 p-3 rounded-md bg-secondary/30 border border-border space-y-2">
+                    <div className="ml-9 mb-3 p-3 rounded-md bg-secondary/30 border border-border space-y-3">
+                      {/* Tool Calls */}
+                      {toolCalls.length > 0 && (
+                        <div>
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Tool Calls</p>
+                          <div className="space-y-1">
+                            {toolCalls.map((tc, ti) => (
+                              <div key={ti} className="flex items-start gap-2 text-[11px] font-mono bg-background/50 rounded p-2">
+                                <span className="text-recovery font-semibold shrink-0">{tc.tool_name}</span>
+                                <span className="text-muted-foreground">({Math.round(tc.latency_ms)}ms)</span>
+                                {tc.error ? (
+                                  <span className="text-destructive">{tc.error}</span>
+                                ) : (
+                                  <span className="text-success">OK</span>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                       <div>
                         <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Input</p>
-                        <pre className="text-[11px] text-foreground font-mono bg-background/50 rounded p-2 overflow-x-auto">
+                        <pre className="text-[11px] text-foreground font-mono bg-background/50 rounded p-2 overflow-x-auto max-h-48 overflow-y-auto">
                           {JSON.stringify(stage.input, null, 2)}
                         </pre>
                       </div>
                       <div>
                         <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Output</p>
-                        <pre className="text-[11px] text-foreground font-mono bg-background/50 rounded p-2 overflow-x-auto">
+                        <pre className="text-[11px] text-foreground font-mono bg-background/50 rounded p-2 overflow-x-auto max-h-48 overflow-y-auto">
                           {JSON.stringify(stage.output, null, 2)}
                         </pre>
                       </div>

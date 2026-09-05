@@ -2,11 +2,14 @@ from __future__ import annotations
 
 import uuid
 from math import ceil
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.auth import get_current_user
 from app.db.database import get_db
+from app.models.user import User
 from app.schemas.agent import (
     AgentActionCreate,
     AgentActionResponse,
@@ -37,6 +40,7 @@ async def create_agent_run(
 @router.get("/runs/{run_id}", response_model=AgentRunResponse)
 async def get_agent_run(
     run_id: uuid.UUID,
+    current_user: Annotated[User, Depends(get_current_user)],
     db: AsyncSession = Depends(get_db),
 ) -> AgentRunResponse:
     svc = AgentService(db)
@@ -46,17 +50,23 @@ async def get_agent_run(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Agent run not found",
         )
+    if run.user_id and run.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Agent run not found",
+        )
     return AgentRunResponse.model_validate(run)
 
 
 @router.get("/runs", response_model=dict)
 async def list_agent_runs(
+    current_user: Annotated[User, Depends(get_current_user)],
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     svc = AgentService(db)
-    items, total = await svc.list_runs(page=page, page_size=page_size)
+    items, total = await svc.list_runs(page=page, page_size=page_size, user_id=current_user.id)
     return {
         "items": [AgentRunResponse.model_validate(r) for r in items],
         "total": total,

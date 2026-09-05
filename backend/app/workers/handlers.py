@@ -35,11 +35,12 @@ async def handle_payment_authorized(event_type: str, payload: dict[str, Any]) ->
 
 
 async def handle_payment_captured(event_type: str, payload: dict[str, Any]) -> None:
-    order_id = payload.get("razorpay_order_id")
-    payment_id = payload.get("razorpay_payment_id")
+    inner = payload.get("payload", payload)
+    order_id = inner.get("razorpay_order_id")
+    payment_id = inner.get("razorpay_payment_id")
     logger.info(
         "handler_payment_captured",
-        extra={"payment_id": payload.get("payment_id"), "order_id": order_id},
+        extra={"payment_id": inner.get("payment_id"), "order_id": order_id},
     )
 
     if not order_id:
@@ -82,12 +83,13 @@ async def handle_payment_captured(event_type: str, payload: dict[str, Any]) -> N
 
 
 async def handle_payment_failed(event_type: str, payload: dict[str, Any]) -> None:
-    order_id = payload.get("razorpay_order_id")
-    failure_reason = payload.get("failure_reason")
-    razorpay_payment_id = payload.get("razorpay_payment_id")
+    inner = payload.get("payload", payload)
+    order_id = inner.get("razorpay_order_id")
+    failure_reason = inner.get("failure_reason") or payload.get("failure_reason")
+    razorpay_payment_id = inner.get("razorpay_payment_id")
     logger.info(
         "handler_payment_failed",
-        extra={"payment_id": payload.get("payment_id"), "order_id": order_id},
+        extra={"payment_id": inner.get("payment_id"), "order_id": order_id},
     )
 
     if not order_id:

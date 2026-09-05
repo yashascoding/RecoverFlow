@@ -4,14 +4,16 @@ import random
 import string
 import uuid
 from datetime import datetime, timezone
-from typing import Any
+from typing import Annotated, Any
 
 from fastapi import APIRouter, BackgroundTasks, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.auth import get_current_user
 from app.core.config import get_settings
 from app.core.logging import get_logger
 from app.db.database import get_db
+from app.models.user import User
 from app.schemas.simulate import (
     FAILURE_DESCRIPTIONS,
     FAILURE_CODES,
@@ -81,6 +83,7 @@ async def _process_in_background(
 async def simulate_payment_failure(
     body: SimulateFailureRequest,
     background_tasks: BackgroundTasks,
+    current_user: Annotated[User, Depends(get_current_user)],
     db: AsyncSession = Depends(get_db),
 ) -> SimulateFailureResponse:
     customer_svc = CustomerService(db)
@@ -113,9 +116,11 @@ async def simulate_payment_failure(
         currency="INR",
         customer_email=email,
         customer_phone="+919876543210",
+        user_id=current_user.id,
     )
 
     payment.customer_id = customer.id
+    payment.failure_reason = FAILURE_DESCRIPTIONS[body.failure_type]
     await db.flush()
 
     await db.commit()

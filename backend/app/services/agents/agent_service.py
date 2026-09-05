@@ -23,12 +23,14 @@ class AgentService:
         payment_id: uuid.UUID | None = None,
         customer_id: uuid.UUID | None = None,
         input_data: dict | None = None,
+        user_id: uuid.UUID | None = None,
     ) -> AgentRun:
         run = AgentRun(
             agent_type=agent_type,
             payment_id=payment_id,
             customer_id=customer_id,
             input_data=input_data,
+            user_id=user_id,
             status=AgentRunStatus.PENDING.value,
         )
         self.db.add(run)
@@ -47,14 +49,20 @@ class AgentService:
         return result.scalar_one_or_none()
 
     async def list_runs(
-        self, page: int = 1, page_size: int = 20
+        self, page: int = 1, page_size: int = 20, user_id: uuid.UUID | None = None
     ) -> tuple[Sequence[AgentRun], int]:
         count_query = select(func.count()).select_from(AgentRun)
+        query = select(AgentRun)
+
+        if user_id:
+            count_query = count_query.where(AgentRun.user_id == user_id)
+            query = query.where(AgentRun.user_id == user_id)
+
         total_result = await self.db.execute(count_query)
         total = total_result.scalar() or 0
 
         query = (
-            select(AgentRun)
+            query
             .order_by(AgentRun.created_at.desc())
             .offset((page - 1) * page_size)
             .limit(page_size)

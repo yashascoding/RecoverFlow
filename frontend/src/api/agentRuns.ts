@@ -1,5 +1,5 @@
 import { api } from './client'
-import type { AgentRun } from '@/types'
+import type { AgentRun, AgentStage } from '@/types'
 
 interface PaginatedResponse<T> {
   items: T[]
@@ -21,17 +21,63 @@ interface RawAgentRun {
   updated_at: string
 }
 
+interface RawTraceStage {
+  stage: string
+  latency_ms: number
+  input_data?: Record<string, unknown>
+  output_data?: Record<string, unknown>
+  tool_calls?: Array<{
+    tool_name: string
+    latency_ms: number
+    result?: Record<string, unknown>
+    error?: string | null
+  }>
+  error?: string | null
+  started_at?: string
+  completed_at?: string
+}
+
 function mapAgentRun(r: RawAgentRun): AgentRun {
   const input = r.input_data ?? {}
   const output = r.output_data ?? {}
   const customerEmail = (input.email as string) ?? ''
   const customerName = customerEmail.split('@')[0]
   const failureReason = (input.failure_reason as string) ?? ''
-  const recoveryScore = (output.recovery_score as number) ?? 0
-  const riskLevel = recoveryScore > 0.7 ? 'low' : recoveryScore > 0.4 ? 'medium' : 'high'
-  const durationMs = r.completed_at && r.started_at
-    ? new Date(r.completed_at).getTime() - new Date(r.started_at).getTime()
-    : 0
+
+  const trace = (output.trace as Record<string, unknown>) ?? {}
+  const rawStages = (trace.stages as RawTraceStage[]) ?? []
+
+  const stages: AgentStage[] = rawStages.map((s) => ({
+    name: s.stage,
+    status: s.error ? 'failed' : 'completed',
+    input: s.input_data ?? {},
+    output: s.output_data ?? {},
+    duration_ms: Math.round(s.latency_ms ?? 0),
+    error: s.error ?? undefined,
+  }))
+
+  const totalLatencyMs = (trace.total_latency_ms as number)
+    ?? (r.completed_at && r.started_at
+      ? new Date(r.completed_at).getTime() - new Date(r.started_at).getTime()
+      : 0)
+
+  const diagnoseStage = rawStages.find((s) => s.stage === 'diagnose')
+  const planStage = rawStages.find((s) => s.stage === 'plan')
+  const diagOutput = (diagnoseStage?.output_data ?? {}) as Record<string, unknown>
+  const planOutput = (planStage?.output_data ?? {}) as Record<string, unknown>
+
+  const diagnosis = (diagOutput.diagnosis as string)
+    || (diagOutput.reason as string)
+    || failureReason
+    || r.agent_type
+
+  const confidence = (diagOutput.confidence as number) ?? 0
+  const riskLevel = (diagOutput.risk_level as string)?.toLowerCase()
+    ?? (confidence > 0.7 ? 'low' : confidence > 0.4 ? 'medium' : 'high')
+
+  const recommendedAction = (diagOutput.recommended_action as string)
+    ?? (planOutput.recommended_actions as Array<{ type: string }>)?.[0]?.type
+    ?? r.status
 
   return {
     id: r.id,
@@ -39,13 +85,13 @@ function mapAgentRun(r: RawAgentRun): AgentRun {
     payment_order_id: r.payment_id ?? '',
     customer_name: customerName,
     customer_email: customerEmail,
-    diagnosis: failureReason || r.agent_type,
-    confidence: recoveryScore,
-    decision: r.status,
+    diagnosis,
+    confidence,
+    decision: recommendedAction,
     risk_level: riskLevel,
     status: (r.status === 'cancelled' ? 'timeout' : r.status) as AgentRun['status'],
-    stages: [],
-    duration_ms: durationMs > 0 ? durationMs : Math.floor(Math.random() * 30000) + 5000,
+    stages,
+    duration_ms: totalLatencyMs > 0 ? totalLatencyMs : 0,
     created_at: r.created_at,
     completed_at: r.completed_at,
   }

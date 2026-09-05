@@ -93,6 +93,11 @@ class RecoveryPipeline:
             logger.warning("pipeline_payment_not_found", extra={"order_id": order_id})
             return RecoveryPipelineResult(success=False, reason="Payment not found")
 
+        # Store failure reason on payment record
+        if failure_reason and not payment.failure_reason:
+            payment.failure_reason = failure_reason
+            await self.db.flush()
+
         # Link customer if not already linked
         if not payment.customer_id:
             from app.models.customer import Customer
@@ -177,8 +182,25 @@ class RecoveryPipeline:
 
         # 3.5 Run AI agent for diagnosis
         agent_result = None
+        agent_run = None
         try:
             from app.services.agents.recovery_agent import RecoveryAgent
+            from app.services.agents.agent_service import AgentService
+
+            agent_svc = AgentService(self.db)
+            agent_run = await agent_svc.create_run(
+                agent_type="recovery",
+                payment_id=payment.id,
+                customer_id=payment.customer_id,
+                input_data={
+                    "payment_id": str(payment.id),
+                    "email": payment.customer_email,
+                    "order_id": order_id,
+                    "failure_reason": failure_reason,
+                },
+                user_id=payment.user_id,
+            )
+
             agent = RecoveryAgent(self.db)
             agent_result = await agent.run({
                 "payment_id": str(payment.id),
@@ -187,15 +209,27 @@ class RecoveryPipeline:
                 "order_id": order_id,
                 "failure_reason": failure_reason,
             })
+
+            agent_run.status = "completed"
+            agent_run.output_data = agent_result
+            agent_run.completed_at = datetime.now(timezone.utc)
+            await self.db.flush()
+
             logger.info(
                 "agent_diagnosis_completed",
                 extra={
                     "payment_id": str(payment.id),
+                    "run_id": str(agent_run.id),
                     "agent_success": agent_result.get("success", False),
                     "agent_state": agent_result.get("state", "unknown"),
                 },
             )
         except Exception as e:
+            if agent_run:
+                agent_run.status = "failed"
+                agent_run.error_message = str(e)
+                agent_run.completed_at = datetime.now(timezone.utc)
+                await self.db.flush()
             logger.warning(
                 "agent_diagnosis_failed",
                 extra={"payment_id": str(payment.id), "error": str(e)},
@@ -307,7 +341,8 @@ class RecoveryPipeline:
         except Exception as e:
             logger.error(
                 "pipeline_email_send_failed",
-                extra={"payment_id": str(payment.id), "error": str(e)},
+                extra={"payment_id": str(payment.id), "error": str(e), "error_type": type(e).__name__},
+                exc_info=True,
             )
             email_msg = None
 
@@ -360,18 +395,25 @@ class RecoveryPipeline:
         from app.models.email_message import EmailMessage, EmailDirection, EmailStatus
         from app.services.payments.razorpay_service import RazorpayService
 
-        razorpay_svc = RazorpayService(db=self.db)
+        razorpay_svc = RazorpayService()
         retry_link = f"https://pay.recoverflow.in/retry/{attempt.id}"  # fallback
 
         try:
-            pl_result = await razorpay_svc.create_payment_link(
+            pl_result = razorpay_svc.create_payment_link(
                 customer_email=payment.customer_email,
                 amount=payment.amount,
+                currency=payment.currency or "INR",
                 description=f"Recovery attempt for order {payment.razorpay_order_id[:20]}",
             )
             if pl_result.get("short_url"):
                 retry_link = pl_result["short_url"]
                 attempt.recovery_link = retry_link
+                # Store the razorpay payment_link_id so we can match webhooks
+                pl_id = pl_result.get("id")
+                if pl_id:
+                    if not payment.metadata_:
+                        payment.metadata_ = {}
+                    payment.metadata_["razorpay_payment_link_id"] = pl_id
                 await self.db.flush()
         except Exception as e:
             logger.warning("pipeline_razorpay_link_fallback", extra={"error": str(e), "payment_id": str(payment.id)})

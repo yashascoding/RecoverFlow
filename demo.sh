@@ -1,7 +1,7 @@
 #!/bin/bash
 # ============================================================================
 # RecoverFlow — Full Demo Script
-# Demonstrates: Login → Simulate Failure → AI Agent → Recovery Email → Capture
+# Demonstrates: Login → Simulate Failure → AI Agent → Recovery Email Sent
 # ============================================================================
 
 set -uo pipefail
@@ -31,7 +31,7 @@ ok "Backend healthy\n"
 # STEP 2: Register / Login
 # ──────────────────────────────────────────────────────────────────────────────
 header "STEP 2 — Authentication"
-DEMO_EMAIL="demo-$(date +%s)@recoverflow.test"
+DEMO_EMAIL="demo-$(date +%s)@example.com"
 DEMO_PASS="Demo@12345"
 
 step "Registering user: $DEMO_EMAIL"
@@ -47,11 +47,12 @@ AUTH_HEADER="Authorization: Bearer $TOKEN"
 # STEP 3: Simulate Payment Failure (triggers full recovery pipeline)
 # ──────────────────────────────────────────────────────────────────────────────
 header "STEP 3 — Simulate Payment Failure + AI Recovery Pipeline"
-CUSTOMER_EMAIL="yashas.bhagwat25@gmail.com"
+CUSTOMER_EMAIL="bhagwatyashas5@gmail.com"
 
 step "Simulating ₹499 payment failure for $CUSTOMER_EMAIL..."
 SIM_RESP=$(curl -sf -X POST "$BASE/api/simulate/failure" \
   -H "Content-Type: application/json" \
+  -H "$AUTH_HEADER" \
   -d "{
     \"customer_email\": \"$CUSTOMER_EMAIL\",
     \"customer_name\": \"Yashas Bhagwat\",
@@ -62,8 +63,10 @@ echo "$SIM_RESP" | python3 -m json.tool
 
 PAYMENT_ID=$(echo "$SIM_RESP" | python3 -c "import sys,json; print(json.load(sys.stdin)['payment_id'])")
 ORDER_ID=$(echo "$SIM_RESP" | python3 -c "import sys,json; print(json.load(sys.stdin)['razorpay_order_id'])")
+EMAIL_SENT=$(echo "$SIM_RESP" | python3 -c "import sys,json; print(json.load(sys.stdin)['email_sent_to'])")
 ok "Payment created: $PAYMENT_ID"
-ok "Order ID: $ORDER_ID\n"
+ok "Order ID: $ORDER_ID"
+ok "Recovery email sent to: $EMAIL_SENT\n"
 
 step "Waiting for AI agent to process (5s)..."
 sleep 5
@@ -97,41 +100,18 @@ echo "$RECOVERY_RESP" | python3 -m json.tool 2>/dev/null | head -40
 ok "Recovery data fetched\n"
 
 # ──────────────────────────────────────────────────────────────────────────────
-# STEP 7: Simulate Payment Capture (customer pays via recovery link)
+# STEP 7: Evaluation Dashboard
 # ──────────────────────────────────────────────────────────────────────────────
-header "STEP 7 — Simulate Customer Payment (Capture)"
-step "Simulating capture for order $ORDER_ID..."
-CAPTURE_RESP=$(curl -sf -X POST "$BASE/api/simulate/capture" \
-  -H "Content-Type: application/json" \
-  -d "{\"razorpay_order_id\": \"$ORDER_ID\"}")
-echo "$CAPTURE_RESP" | python3 -m json.tool
-ok "Payment captured successfully\n"
-
-sleep 2
-
-# ──────────────────────────────────────────────────────────────────────────────
-# STEP 8: Verify Recovered Status
-# ──────────────────────────────────────────────────────────────────────────────
-header "STEP 8 — Verify Recovery Complete"
-step "Fetching updated payment..."
-PAY_FINAL=$(curl -sf -H "$AUTH_HEADER" "$BASE/api/payments/$PAYMENT_ID")
-echo "$PAY_FINAL" | python3 -m json.tool
-FINAL_STATUS=$(echo "$PAY_FINAL" | python3 -c "import sys,json; print(json.load(sys.stdin)['status'])")
-ok "Final payment status: $FINAL_STATUS\n"
-
-# ──────────────────────────────────────────────────────────────────────────────
-# STEP 9: Evaluation Dashboard
-# ──────────────────────────────────────────────────────────────────────────────
-header "STEP 9 — Evaluation Dashboard"
+header "STEP 7 — Evaluation Dashboard"
 step "Fetching evaluation metrics..."
 EVAL=$(curl -sf -H "$AUTH_HEADER" "$BASE/api/evaluation/dashboard")
 echo "$EVAL" | python3 -m json.tool
 ok "Evaluation dashboard loaded\n"
 
 # ──────────────────────────────────────────────────────────────────────────────
-# STEP 10: Overview Stats
+# STEP 8: Overview Stats
 # ──────────────────────────────────────────────────────────────────────────────
-header "STEP 10 — System Overview"
+header "STEP 8 — System Overview"
 step "Fetching overview metrics..."
 OVERVIEW=$(curl -sf -H "$AUTH_HEADER" "$BASE/api/payments/stats/overview")
 echo "$OVERVIEW" | python3 -m json.tool
@@ -147,10 +127,9 @@ echo -e "  2. ✅ User registered & authenticated"
 echo -e "  3. ✅ Payment failure simulated (insufficient_funds)"
 echo -e "  4. ✅ AI agent investigated & diagnosed (Groq LLM)"
 echo -e "  5. ✅ Recovery email sent with REAL Razorpay payment link"
-echo -e "  6. ✅ Customer payment captured"
-echo -e "  7. ✅ Payment status: recovered"
-echo -e "  8. ✅ Evaluation dashboard shows metrics"
+echo -e "  6. ✅ Evaluation dashboard shows metrics"
 echo ""
+echo -e "${CYAN}Check your email: $EMAIL_SENT${NC}"
 echo -e "${CYAN}Frontend UI: http://localhost:3001${NC}"
 echo -e "${CYAN}API Docs:    http://localhost:8001/docs${NC}"
 echo -e "${CYAN}Backend:     http://localhost:8001/api/health${NC}"

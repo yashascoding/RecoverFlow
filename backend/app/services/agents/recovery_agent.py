@@ -396,7 +396,7 @@ class RecoveryAgent:
                         "Content-Type": "application/json",
                     },
                     json={
-                        "model": "llama-3.1-8b-instant",
+                        "model": "openai/gpt-oss-20b",
                         "messages": [
                             {"role": "system", "content": "You are a payment recovery AI. Analyze the payment failure context and return a JSON object with: diagnosis (string), confidence (0.0-1.0), recommended_action (EMAIL_PAYMENT_LINK | RETRY_PAYMENT | SEND_SMS | ESCALATE_TO_HUMAN | BLOCK_RECOVERY), reason (string), risk_level (LOW | MEDIUM | HIGH). Return ONLY valid JSON, no markdown."},
                             {"role": "user", "content": prompt},
