@@ -164,18 +164,9 @@ async def _process_webhook_event(
                         ),
                         raw_payload=raw_payload,
                     )
-
-                    # Run the full recovery pipeline
-                    pipeline = RecoveryPipeline(db)
-                    result = await pipeline.handle_payment_failure(
-                        order_id=order_id,
-                        failure_reason=entity.get("error_description"),
-                        razorpay_payment_id=payment_id,
-                        original_status=original_status,
-                    )
                     logger.info(
-                        "recovery_pipeline_result",
-                        extra={"order_id": order_id, "result": result.to_dict()},
+                        "payment_failed_event_dispatched",
+                        extra={"order_id": order_id},
                     )
 
             elif event == "payment.authorized":
